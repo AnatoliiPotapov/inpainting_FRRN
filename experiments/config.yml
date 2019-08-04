@@ -1,0 +1,20 @@
+path:
+ 
+  train: '../Datasets/Huawei/DATASET_INPAINTING/train_gt/'
+  experiment: './experiments/dummy/'
+
+dataset:
+  centered: True
+  mask_height: 50
+  mask_width: 50
+  image_height: 600
+  image_width: 500
+  max_masks_count: 1
+
+architecture:
+  factor: 8
+  num_blocks: 1
+
+training:
+  batch_size: 32
+

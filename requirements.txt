@@ -1,0 +1,8 @@
+numpy
+pandas
+matplotlib
+tqdm
+pyyaml
+torch=1.0.0
+torchvision
+scikit-image
