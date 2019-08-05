@@ -39,7 +39,7 @@ class PConvBlock(nn.Module):
 
 
 class Stack(nn.Module):
-    def __init__(self, modules):
+    def __init__(self, *modules):
         super().__init__()
         self.mod = nn.ModuleList(modules)
         
@@ -80,7 +80,7 @@ class FRRB(nn.Module):
                            kernel_size=conf[i][1],
                            upscale=True if conf[i][3]=='u' else False)
             )
-        return Stack(pipe)
+        return Stack(*pipe)
 
 
 class InpaintingGenerator(nn.Module):

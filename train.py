@@ -24,7 +24,7 @@ def main():
     code_path = './'
     with open(os.path.join(code_path, config_path), 'r') as f:
         pretty_config = f.read()
-        config = yaml.load(pretty_config)
+        config = yaml.load(pretty_config, yaml.Loader)
 
     print('\nModel configurations:'\
           '\n---------------------------------\n'\

@@ -47,6 +47,7 @@ class Dataset(torch.utils.data.Dataset):
         self.image_width = config["image_width"]
         self.image_height = config["image_height"]
         self.max_masks_count = config["max_masks_count"]
+        self.num_workers = config["num_workers"]
         self.factor = config["factor"]
         
         # loading dataset
@@ -108,7 +109,7 @@ class Dataset(torch.utils.data.Dataset):
                 dataset=self,
                 batch_size=batch_size,
                 # TODO DataLoader worker (pid(s) 17837) exited unexpectedly
-                num_workers=0,
+                num_workers=2,
                 drop_last=True,
                 #shuffle=True
             )
