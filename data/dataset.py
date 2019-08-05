@@ -1,11 +1,14 @@
 import os 
 import glob
+
 import torch
 from torch.utils.data import DataLoader
 import torchvision.transforms.functional as F
 import numpy as np
 from PIL import Image
 from skimage import io
+
+from utils.model import pad_image
 
 
 # TODO migrate from np to torch
@@ -44,6 +47,7 @@ class Dataset(torch.utils.data.Dataset):
         self.image_width = config["image_width"]
         self.image_height = config["image_height"]
         self.max_masks_count = config["max_masks_count"]
+        self.factor = config["factor"]
         
         # loading dataset
         self.images = self._load_data(images_path)
@@ -76,10 +80,16 @@ class Dataset(torch.utils.data.Dataset):
             mask = create_mask(self.mask_width, self.mask_height, 
                                width=self.image_width, height=self.image_height, 
                                centered=self.centered, max_masks_count=self.max_masks_count)
+        
+        image = self._to_tensor(image)
+        mask = self._to_tensor(mask)
+        if self.factor:
+            image, mask, padded_mask = pad_image(image, mask, self.factor)
             
         return {
-            'image': self._to_tensor(image), # TODO return damaged?
-            'mask': self._to_tensor(mask)
+            'image': image, # TODO return damaged?
+            'mask': mask,
+            'padded_image': padded_mask,
         }
 
     def _load_data(self, data_path):
@@ -97,7 +107,10 @@ class Dataset(torch.utils.data.Dataset):
             image_loader = DataLoader(
                 dataset=self,
                 batch_size=batch_size,
-                drop_last=True
+                # TODO DataLoader worker (pid(s) 17837) exited unexpectedly
+                num_workers=0,
+                drop_last=True,
+                #shuffle=True
             )
 
             for item in image_loader:

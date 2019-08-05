@@ -1,10 +1,12 @@
 import math
+
 import torch
 import torchvision
 from torch import nn
 import torch.nn.functional as F
 
 from .pconv import PartialConv2d
+
 
 class PConvBlock(nn.Module):
     """ PConvBlock includes:
@@ -37,13 +39,13 @@ class PConvBlock(nn.Module):
 
 
 class Stack(nn.Module):
-    def __init__(self, *modules):
+    def __init__(self, modules):
         super().__init__()
-        self.modules = modules
+        self.mod = nn.ModuleList(modules)
         
     def forward(self, x, mask):
-        for module in self.modules:
-            x, mask = module.forward(x, mask)
+        for module in self.mod:
+            x, mask = module(x, mask)
         return x, mask
 
 
@@ -78,4 +80,24 @@ class FRRB(nn.Module):
                            kernel_size=conf[i][1],
                            upscale=True if conf[i][3]=='u' else False)
             )
-        return Stack(*pipe)
+        return Stack(pipe)
+
+
+class InpaintingGenerator(nn.Module):
+    """
+    InpaintingGenerator
+    """
+    def __init__(self, config):
+        super(InpaintingGenerator, self).__init__()
+        self.frrb = nn.ModuleList([FRRB() for i in range(config["architecture"]["num_blocks"])])
+
+    def forward(self, image, mask, pad_mask):
+        initial_mask = mask.clone().detach()
+        image = image * initial_mask
+        
+        for m in self.frrb:
+            residuals, mask = m(image, mask) #.forward
+            residuals *= pad_mask
+            image += residuals*(1-initial_mask)
+            
+        return image, initial_mask 

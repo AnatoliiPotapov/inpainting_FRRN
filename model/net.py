@@ -1,35 +1,88 @@
+import os 
+
 import torch
 from torch import nn
 
-from .layers import FRRB
+from .layers import InpaintingGenerator
+from utils.model import pad_image
 
 
 class BaseModel(nn.Module):
-    """
-    """
     def __init__(self, name, config):
         super(BaseModel, self).__init__()
         
         self.name = name
-        self.config = config
+        self.checkpoint = config["architecture"]["checkpoint"]
+        self._iteration = 0 #config["iteration"]
+    
+    # TODO save/load discriminator logic
+    def load(self):
+        if os.path.exists(self.checkpoint):
+            print('Loading %s model...' % self.name)
 
-
-class InpaintingGenerator(nn.Module):
-    """
-    InpaintingGenerator
-    """
-    def __init__(self, num_blocks):
-        self.frrb = []
-        for i in range(num_blocks):
-            self.frrb.append(FRRB())
-        
-    def forward(self, image, mask, pad_mask):
-        initial_mask = torch.tensor(mask)
-        image = image * initial_mask
-        
-        for m in self.frrb:
-            residuals, mask = m.forward(image, mask)
-            residuals *= pad_mask
-            image += residuals*(1-initial_mask)
+            if torch.cuda.is_available():
+                data = torch.load(self.checkpoint)
+            else:
+                data = torch.load(self.checkpoint, map_location=lambda storage, loc: storage)
             
-        return image, initial_mask  
+            # TODO self.generator
+            self.generator.load_state_dict(data['generator'])
+            self._iteration = data['iteration']
+
+    def save(self):
+        print('Saving %s...\n' % self.name)
+        torch.save({
+            'iteration': self._iteration,
+            # TODO self.generator
+            'generator': self.generator.state_dict()
+        }, self.checkpoint)
+
+
+class InpaintingModel(BaseModel):
+    def __init__(self, config):
+        super(InpaintingModel, self).__init__('InpaintingModel', config)
+        generator = InpaintingGenerator(config)
+
+        gpus = [int(i) for i in config["gpu"].split(",")]
+        if len(gpus) > 1:
+            # TODO different gpus ids
+            gpus = list(range(len(gpus)))
+            generator = nn.DataParallel(generator, gpus)
+        self.add_module('generator', generator)
+        
+        l1_loss = nn.L1Loss()
+        mse_loss = nn.MSELoss()
+        self.add_module('l1_loss', l1_loss)
+        self.add_module('mse_loss', mse_loss)
+        
+        learning_rate = config['training']["learning_rate"]
+        betas = (config['training']["beta1"], config['training']["beta2"])
+        self.optimizer = torch.optim.Adam(generator.parameters(), 
+                                     lr=learning_rate, betas=betas)
+
+    def process(self, images, masks, pad_image):
+        self._iteration += 1
+
+        # zero optimizers
+        self.optimizer.zero_grad()
+
+        # process outputs
+        outputs, initial_mask = self(images, masks, pad_image)
+        losses = {
+            "l1": self.l1_loss(outputs, images).item(),
+            "mse": self.mse_loss(outputs, images).item(),
+        }
+
+        return outputs, losses
+
+    def forward(self, images, masks, pad_masks):
+        return self.generator(images, masks, pad_masks)
+
+    def backward(self, l1_loss=None, mse_loss=None):
+        if l1_loss is not None:
+            l1_loss.backward()
+        self.optimizer.step()
+
+        if mse_loss is not None:
+            mse_loss.backward()
+        self.optimizer.step()

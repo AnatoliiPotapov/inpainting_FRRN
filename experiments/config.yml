@@ -1,5 +1,4 @@
 path:
- 
   train: '../Datasets/Huawei/DATASET_INPAINTING/train_gt/'
   experiment: './experiments/dummy/'
 
@@ -10,11 +9,20 @@ dataset:
   image_height: 600
   image_width: 500
   max_masks_count: 1
+  factor: 8
 
 architecture:
-  factor: 8
-  num_blocks: 1
+  checkpoint: ''
+  # iteration
+  num_blocks: 2
 
 training:
-  batch_size: 32
+  batch_size: 8           #8 
+  iterations: 10
+  learning_rate: 0.0001   # set learning rate for training generator and discriminator as 10:1
+  beta1: 0                # 0
+  beta2: 0.9              # 0.9
 
+
+gpu: '2,3'
+seed: 1337
