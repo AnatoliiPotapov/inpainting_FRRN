@@ -1,0 +1,1 @@
+python metrics.py --data-path ../../DATASET_INPAINTING/gt --output-path ../../DATASET_INPAINTING/result --debug 0
