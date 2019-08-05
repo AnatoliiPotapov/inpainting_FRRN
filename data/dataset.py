@@ -107,7 +107,8 @@ class Dataset(torch.utils.data.Dataset):
             image_loader = DataLoader(
                 dataset=self,
                 batch_size=batch_size,
-                #num_workers=4,
+                # TODO DataLoader worker (pid(s) 17837) exited unexpectedly
+                num_workers=0,
                 drop_last=True,
                 #shuffle=True
             )

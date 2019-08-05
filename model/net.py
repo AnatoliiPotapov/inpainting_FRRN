@@ -43,8 +43,11 @@ class InpaintingModel(BaseModel):
         super(InpaintingModel, self).__init__('InpaintingModel', config)
         generator = InpaintingGenerator(config)
 
-        if len(config["gpu"]) > 1:
-            generator = nn.DataParallel(self.generator, config["gpu"])
+        gpus = [int(i) for i in config["gpu"].split(",")]
+        if len(gpus) > 1:
+            # TODO different gpus ids
+            gpus = list(range(len(gpus)))
+            generator = nn.DataParallel(generator, gpus)
         self.add_module('generator', generator)
         
         l1_loss = nn.L1Loss()

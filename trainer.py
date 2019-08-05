@@ -33,7 +33,7 @@ def main():
 
     # cuda visble devices
     os.environ['CUDA_VISIBLE_DEVICES'] = config["gpu"]
-
+    
     # init device
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -71,7 +71,7 @@ def main():
         while keep_training:
             #progbar = Progbar(total, width=20, stateful_metrics=['epoch', 'iter'])
 
-            for items in train_loader:
+            for i, items in enumerate(train_loader):
                 images = items['image'].to(device)
                 masks = items['mask'].to(device)
                 padded_images = items['padded_image'].to(device)
@@ -82,13 +82,13 @@ def main():
                 # TODO inpainting_model.train() with losses
                 outputs, loss = inpainting_model.process(images, masks, padded_images)
 
-                break
-                print(outputs.size())
-                print(loss)
-
+                if i % 100 == 0:
+                    print("step:", i, "\tmse:", loss["mse"])
                 #if (i+1) % 100 == 0:
                 #    print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
                 #        .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
+                
+                keep_training = False
 
     # generator test
     else:
