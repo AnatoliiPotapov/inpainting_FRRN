@@ -1,9 +1,10 @@
+future
 numpy
 pandas
 matplotlib
 tqdm
 pyyaml
-torch==1.0.0
+torch==1.1.0.post2
 tensorflow==2.0.0-beta1
 torchvision
 scikit-image

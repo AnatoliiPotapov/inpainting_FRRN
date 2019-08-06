@@ -5,6 +5,7 @@ import random
 import numpy as np
 import torch
 from torch import nn
+from torch.utils.tensorboard import SummaryWriter
 
 from model.net import InpaintingModel
 from data.dataset import Dataset
@@ -47,6 +48,9 @@ def main():
     np.random.seed(config["seed"])
     random.seed(config["seed"])
 
+    # initialize log writer
+    logger = SummaryWriter(log_dir=config['path']['experiment'])
+
     # build the model and initialize
     inpainting_model = InpaintingModel(config).to(device)
     if checkpoint:
@@ -81,6 +85,9 @@ def main():
                 # Forward pass
                 # TODO inpainting_model.train() with losses
                 outputs, loss = inpainting_model.process(images, masks, padded_images)
+                step = inpainting_model._iteration
+                logger.add_scalar('loss_l1', loss['l1'], global_step=step)
+                logger.add_scalar('loss_mse', loss['mse'], global_step=step)
 
                 if i % 100 == 0:
                     print("step:", i, "\tmse:", loss["mse"])
@@ -95,6 +102,7 @@ def main():
         print('\nStart testing...\n')
         #generator.test()
 
+    logger.close()
     print('Done')
     
 
