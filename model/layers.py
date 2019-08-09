@@ -100,4 +100,4 @@ class InpaintingGenerator(nn.Module):
             residuals *= pad_mask
             image += residuals*(1-initial_mask)
             
-        return image, initial_mask 
+        return image, residuals, initial_mask 

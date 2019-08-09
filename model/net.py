@@ -67,13 +67,18 @@ class InpaintingModel(BaseModel):
         self.optimizer.zero_grad()
 
         # process outputs
-        outputs, initial_mask = self(images, masks, pad_image)
+        outputs, residuals, initial_mask = self(images, masks, pad_image)
+
+        #import matplotlib.pyplot as plt
+        #plt.imshow((residuals[0]*(1-initial_mask[0])).detach().permute(1,2,0))
+        #plt.show()
+
         losses = {
-            "l1": self.l1_loss(outputs, images).item(),
-            "mse": self.mse_loss(outputs, images).item(),
+            "l1": self.l1_loss(outputs, images),
+            "mse": self.mse_loss(outputs, images),
         }
 
-        return outputs, losses
+        return outputs, residuals, images, losses
 
     def forward(self, images, masks, pad_masks):
         return self.generator(images, masks, pad_masks)

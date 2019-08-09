@@ -4,6 +4,7 @@ import random
 
 import numpy as np
 import torch
+import torchvision
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 
@@ -59,7 +60,7 @@ def main():
     # generator training
     if training:
         print('\nStart training...\n')
-        
+        inpainting_model.train()
         batch_size = config['training']['batch_size']
 
         # create dataset
@@ -84,17 +85,31 @@ def main():
 
                 # Forward pass
                 # TODO inpainting_model.train() with losses
-                outputs, loss = inpainting_model.process(images, masks, padded_images)
+                outputs, residuals, loss = inpainting_model.process(images, masks, padded_images)
                 step = inpainting_model._iteration
-                logger.add_scalar('loss_l1', loss['l1'], global_step=step)
-                logger.add_scalar('loss_mse', loss['mse'], global_step=step)
+
+                logger.add_scalar('loss_l1', loss['l1'].item(), global_step=step)
+                logger.add_scalar('loss_mse', loss['mse'].item(), global_step=step)
+
+                inpainting_model.backward(loss['mse'])
 
                 if i % 100 == 0:
-                    print("step:", i, "\tmse:", loss["mse"])
-                #if (i+1) % 100 == 0:
-                #    print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
-                #        .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
-                
+                    print("step:", i, "\tmse:", loss["mse"].item())
+                    
+                    #images = outputs.detach() * 255
+                    grid = torchvision.utils.make_grid(images*255, nrow=4)
+                    logger.add_image('gt_images', grid, step)
+
+                    #images = outputs.detach() * 255
+                    grid = torchvision.utils.make_grid(outputs.detach()*255, nrow=4)
+                    logger.add_image('outputs', grid, step)
+
+                    #images = outputs.detach() * 255
+                    grid = torchvision.utils.make_grid(residuals.detach()*255, nrow=4)
+                    logger.add_image('residuals', grid, step)
+
+
+
                 keep_training = False
 
     # generator test
