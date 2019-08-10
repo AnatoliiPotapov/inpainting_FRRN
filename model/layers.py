@@ -8,6 +8,14 @@ import torch.nn.functional as F
 from .pconv import PartialConv2d
 
 
+def plot_image(tensor, exit=False):
+    import matplotlib.pyplot as plt 
+    plt.imshow(tensor.permute(1,2,0).detach().numpy())
+    plt.show()
+    if exit:
+        exit()
+        
+
 class PConvBlock(nn.Module):
     """ PConvBlock includes:
     
@@ -93,11 +101,12 @@ class InpaintingGenerator(nn.Module):
 
     def forward(self, image, mask, pad_mask):
         initial_mask = mask.clone().detach()
-        image = image * initial_mask
-        
+        image = (image + initial_mask).clamp(max=1.0)
+       
+        #plot_image(image[0]*255)
         for m in self.frrb:
-            residuals, mask = m(image, mask) #.forward
+            residuals, mask = m(image, mask)
             residuals *= pad_mask
             image += residuals*(1-initial_mask)
-            
-        return image, residuals, initial_mask 
+
+        return image, initial_mask

@@ -14,11 +14,18 @@ from data.dataset import Dataset
 
 # ARGS 
 config_path = 'experiments/config.yml'
-images_path = '../Datasets/Huawei/DATASET_INPAINTING/train_gt/'
+images_path = '../DATASET_INPAINTING/temp_gt/'
 masks_path = None#'../DATASET_INPAINTING/images'
 checkpoint = None
 training = True
 
+
+def plot_image(tensor, exit=False):
+    import matplotlib.pyplot as plt 
+    plt.imshow(tensor.permute(1,2,0).detach().numpy())
+    plt.show()
+    if exit:
+        exit()
 
 os.system("clear")
 def main():
@@ -82,16 +89,15 @@ def main():
                 padded_images = items['padded_image'].to(device)
                 
                 images = (images/255).float()
-
+                
                 # Forward pass
                 # TODO inpainting_model.train() with losses
-                outputs, residuals, loss = inpainting_model.process(images, masks, padded_images)
+                outputs, loss = inpainting_model.process(images, masks, padded_images)
+                inpainting_model.backward(mse_loss=loss['mse'])
                 step = inpainting_model._iteration
 
-                logger.add_scalar('loss_l1', loss['l1'].item(), global_step=step)
+                #logger.add_scalar('loss_l1', loss['l1'].item(), global_step=step)
                 logger.add_scalar('loss_mse', loss['mse'].item(), global_step=step)
-
-                inpainting_model.backward(loss['mse'])
 
                 if i % 100 == 0:
                     print("step:", i, "\tmse:", loss["mse"].item())
@@ -103,12 +109,6 @@ def main():
                     #images = outputs.detach() * 255
                     grid = torchvision.utils.make_grid(outputs.detach()*255, nrow=4)
                     logger.add_image('outputs', grid, step)
-
-                    #images = outputs.detach() * 255
-                    grid = torchvision.utils.make_grid(residuals.detach()*255, nrow=4)
-                    logger.add_image('residuals', grid, step)
-
-
 
                 keep_training = False
 

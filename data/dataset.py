@@ -15,12 +15,12 @@ from utils.model import pad_image
 def create_mask(mask_height, mask_width,
                 height=600, width=500, 
                 centered=False, max_masks_count=5):
-    mask = np.ones((height, width))
+    mask = np.zeros((height, width))
     if centered:
         mask_x = int(width/2 - mask_width/2)
         mask_y = int(height/2 - mask_height/2)
         
-        mask[mask_y:mask_y + mask_height, mask_x:mask_x + mask_width] = 0.0
+        mask[mask_y:mask_y + mask_height, mask_x:mask_x + mask_width] = 1.0
     else:
         for _ in range(np.random.randint(1, max_masks_count+1)):
             #TODO sizes
@@ -30,7 +30,7 @@ def create_mask(mask_height, mask_width,
             mask_x = np.random.randint(0, width - mask_width)
             mask_y = np.random.randint(0, height - mask_height)
             
-            mask[mask_y:mask_y + mask_height, mask_x:mask_x + mask_width] = 0.0
+            mask[mask_y:mask_y + mask_height, mask_x:mask_x + mask_width] = 1.0
         
     return mask
 
@@ -109,7 +109,7 @@ class Dataset(torch.utils.data.Dataset):
                 dataset=self,
                 batch_size=batch_size,
                 # TODO DataLoader worker (pid(s) 17837) exited unexpectedly
-                num_workers=2,
+                #num_workers=2,
                 drop_last=True,
                 #shuffle=True
             )

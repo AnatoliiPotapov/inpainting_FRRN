@@ -43,11 +43,13 @@ class InpaintingModel(BaseModel):
         super(InpaintingModel, self).__init__('InpaintingModel', config)
         generator = InpaintingGenerator(config)
 
-        gpus = [int(i) for i in config["gpu"].split(",")]
-        if len(gpus) > 1:
-            # TODO different gpus ids
-            gpus = list(range(len(gpus)))
-            generator = nn.DataParallel(generator, gpus)
+        if config["gpu"]:
+            gpus = [int(i) for i in config["gpu"].split(",")]
+    
+            if len(gpus) > 1:
+                # TODO different gpus ids
+                gpus = list(range(len(gpus)))
+                generator = nn.DataParallel(generator, gpus)
         self.add_module('generator', generator)
         
         l1_loss = nn.L1Loss()
@@ -67,18 +69,14 @@ class InpaintingModel(BaseModel):
         self.optimizer.zero_grad()
 
         # process outputs
-        outputs, residuals, initial_mask = self(images, masks, pad_image)
-
-        #import matplotlib.pyplot as plt
-        #plt.imshow((residuals[0]*(1-initial_mask[0])).detach().permute(1,2,0))
-        #plt.show()
-
+        outputs, initial_mask = self(images, masks, pad_image)
+        
         losses = {
             "l1": self.l1_loss(outputs, images),
             "mse": self.mse_loss(outputs, images),
         }
 
-        return outputs, residuals, images, losses
+        return outputs, losses
 
     def forward(self, images, masks, pad_masks):
         return self.generator(images, masks, pad_masks)
@@ -86,8 +84,8 @@ class InpaintingModel(BaseModel):
     def backward(self, l1_loss=None, mse_loss=None):
         if l1_loss is not None:
             l1_loss.backward()
-        self.optimizer.step()
-
+        
         if mse_loss is not None:
             mse_loss.backward()
+
         self.optimizer.step()
