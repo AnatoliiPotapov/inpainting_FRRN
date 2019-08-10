@@ -109,7 +109,7 @@ class Dataset(torch.utils.data.Dataset):
                 dataset=self,
                 batch_size=batch_size,
                 # TODO DataLoader worker (pid(s) 17837) exited unexpectedly
-                num_workers=2,
+                num_workers=self.num_workers,
                 drop_last=True,
                 #shuffle=True
             )

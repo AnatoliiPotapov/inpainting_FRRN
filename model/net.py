@@ -62,6 +62,7 @@ class InpaintingModel(BaseModel):
 
     def process(self, images, masks, pad_image):
         self._iteration += 1
+        copy_images = images.clone().detach().requires_grad_(False)
 
         # zero optimizers
         self.optimizer.zero_grad()
@@ -69,16 +70,12 @@ class InpaintingModel(BaseModel):
         # process outputs
         outputs, residuals, initial_mask = self(images, masks, pad_image)
 
-        #import matplotlib.pyplot as plt
-        #plt.imshow((residuals[0]*(1-initial_mask[0])).detach().permute(1,2,0))
-        #plt.show()
-
         losses = {
-            "l1": self.l1_loss(outputs, images),
-            "mse": self.mse_loss(outputs, images),
+            "l1": self.l1_loss(outputs, copy_images),
+            "mse": self.mse_loss(outputs, copy_images),
         }
 
-        return outputs, residuals, images, losses
+        return outputs, residuals, losses
 
     def forward(self, images, masks, pad_masks):
         return self.generator(images, masks, pad_masks)

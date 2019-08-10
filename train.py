@@ -8,6 +8,7 @@ import torchvision
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 
+from utils.masks import get_constant_mask
 from model.net import InpaintingModel
 from data.dataset import Dataset
 
@@ -53,7 +54,8 @@ def main():
     logger = SummaryWriter(log_dir=config['path']['experiment'])
 
     # build the model and initialize
-    inpainting_model = InpaintingModel(config).to(device)
+    initial_mask = get_constant_mask().to(device)
+    inpainting_model = InpaintingModel(config, initial_mask).to(device)
     if checkpoint:
         inpainting_model.load(checkpoint)
 
@@ -64,7 +66,7 @@ def main():
         batch_size = config['training']['batch_size']
 
         # create dataset
-        dataset = Dataset(config['dataset'], images_path, masks_path, training)
+        dataset = Dataset(config['dataset'], config['path']['train'], masks_path, training)
         train_loader = dataset.create_iterator(batch_size)
 
         # Train the generator
@@ -79,13 +81,9 @@ def main():
             for i, items in enumerate(train_loader):
                 images = items['image'].to(device)
                 masks = items['mask'].to(device)
-                padded_images = items['padded_image'].to(device)
                 
-                images = (images/255).float()
-
                 # Forward pass
-                # TODO inpainting_model.train() with losses
-                outputs, residuals, loss = inpainting_model.process(images, masks, padded_images)
+                outputs, residuals, loss = inpainting_model.process(images, masks)
                 step = inpainting_model._iteration
 
                 logger.add_scalar('loss_l1', loss['l1'].item(), global_step=step)
@@ -105,7 +103,7 @@ def main():
                     logger.add_image('outputs', grid, step)
 
                     #images = outputs.detach() * 255
-                    grid = torchvision.utils.make_grid(residuals.detach()*255, nrow=4)
+                    grid = torchvision.utils.make_grid((residuals.detach()*(1-masks.detach()))*255, nrow=4)
                     logger.add_image('residuals', grid, step)
 
 

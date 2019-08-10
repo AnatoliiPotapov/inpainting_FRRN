@@ -1,4 +1,5 @@
 import math
+from pytorch_memlab import profile
 
 import torch
 import torchvision
@@ -16,7 +17,7 @@ class PConvBlock(nn.Module):
           Activation Function
     """
     def __init__(self, in_channels, out_channels, stride=1, 
-                 kernel_size=3, upscale=False):
+                 kernel_size=3, upscale=False, act='relu'):
         super().__init__()
         
         self.upscale = None
@@ -28,7 +29,13 @@ class PConvBlock(nn.Module):
                                    kernel_size=kernel_size, stride=stride,
                                    padding=pad_size, return_mask=True)
         self.norm = nn.InstanceNorm2d(out_channels, track_running_stats=False)
-        self.act = nn.ReLU(False)    
+        
+        if act == 'relu':
+            self.act = nn.ReLU(False)
+        elif act == 'leaky':
+            self.act = nn.LeakyReLU(0.2)
+        else:
+            self.act =  nn.Identity()
         
     def forward(self, x, mask):
         if self.upscale:
@@ -53,11 +60,11 @@ class FRRB(nn.Module):
     def __init__(self, constant_mask=None):
         super().__init__()
         self.conf = {
-            'left': [(2,3,64,'r'), (2,3,96,'r'), (2,3,128,'r'),
-                     (1,3,96,'u'), (1,3,64,'u'), (1,3,3,'u')],
-            'right': [(1,5,32,'r'), (1,5,32,'r'), (1,5,3,'r')]
+            'left': [(2,3,64,'r','relu'), (2,3,96,'r','relu'), (2,3,128,'r','relu'),
+                     (1,3,96,'u','leaky'), (1,3,64,'u','leaky'), (1,3,3,'u','none')],
+            'right': [(1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,3,'r','none')]
         }
-        self.constant_mask = constant_mask
+        self.register_buffer("constant_mask", constant_mask)
         self.left = self.get_pipeline_from_config(self.conf['left'])
         self.right = self.get_pipeline_from_config(self.conf['right'])
 
@@ -78,7 +85,8 @@ class FRRB(nn.Module):
             pipe.append(
                 PConvBlock(in_channels, out_channels, stride=conf[i][0],
                            kernel_size=conf[i][1],
-                           upscale=True if conf[i][3]=='u' else False)
+                           upscale=True if conf[i][3]=='u' else False,
+                           act=conf[i][4])
             )
         return Stack(*pipe)
 
@@ -87,17 +95,22 @@ class InpaintingGenerator(nn.Module):
     """
     InpaintingGenerator
     """
-    def __init__(self, config):
+    def __init__(self, config, pad_mask):
         super(InpaintingGenerator, self).__init__()
-        self.frrb = nn.ModuleList([FRRB() for i in range(config["architecture"]["num_blocks"])])
+        self.frrb = nn.ModuleList([
+            FRRB(constant_mask=pad_mask) for i in range(config["architecture"]["num_blocks"])
+        ])
 
-    def forward(self, image, mask, pad_mask):
+    @profile
+    def forward(self, image, mask):
         initial_mask = mask.clone().detach()
-        image = image * initial_mask
-        
+        result = image.clone() * mask
+
+        output = []
         for m in self.frrb:
-            residuals, mask = m(image, mask) #.forward
-            residuals *= pad_mask
-            image += residuals*(1-initial_mask)
-            
-        return image, residuals, initial_mask 
+            residuals, mask = m(result, mask)
+            residuals = residuals * (mask - initial_mask)
+            output.append(residuals)
+            result = (result+residuals).clamp(max=1.0, min=0.0)
+        
+        return result, output, mask 
