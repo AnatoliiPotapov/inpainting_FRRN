@@ -8,14 +8,6 @@ import torch.nn.functional as F
 from .pconv import PartialConv2d
 
 
-def plot_image(tensor, exit=False):
-    import matplotlib.pyplot as plt 
-    plt.imshow(tensor.permute(1,2,0).detach().numpy())
-    plt.show()
-    if exit:
-        exit()
-        
-
 class PConvBlock(nn.Module):
     """ PConvBlock includes:
     
@@ -75,7 +67,7 @@ class FRRB(nn.Module):
         mask = left_mask * right_mask 
         if self.constant_mask is not None:
             mask *= self.constant_mask
-        r = 0.5 * (left_r + right_r) * mask
+        r = 0.5 * ((left_r + right_r) * mask).float()
         return r, mask   
 
     def get_pipeline_from_config(self, conf):
@@ -101,12 +93,11 @@ class InpaintingGenerator(nn.Module):
 
     def forward(self, image, mask, pad_mask):
         initial_mask = mask.clone().detach()
-        image = (image + initial_mask).clamp(max=1.0)
+        image *= initial_mask
        
-        #plot_image(image[0]*255)
         for m in self.frrb:
             residuals, mask = m(image, mask)
             residuals *= pad_mask
-            image += residuals*(1-initial_mask)
+            image += residuals*(1 - initial_mask)
 
-        return image, initial_mask
+        return image

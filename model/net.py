@@ -68,12 +68,14 @@ class InpaintingModel(BaseModel):
         # zero optimizers
         self.optimizer.zero_grad()
 
+        images_gt = images.clone()
+
         # process outputs
-        outputs, initial_mask = self(images, masks, pad_image)
+        outputs = self(images, masks, pad_image)
         
         losses = {
-            "l1": self.l1_loss(outputs, images),
-            "mse": self.mse_loss(outputs, images),
+            "l1": self.l1_loss(outputs, images_gt),
+            "mse": self.mse_loss(outputs, images_gt),
         }
 
         return outputs, losses

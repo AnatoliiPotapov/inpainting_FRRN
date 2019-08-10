@@ -12,14 +12,6 @@ from model.net import InpaintingModel
 from data.dataset import Dataset
 
 
-# ARGS 
-config_path = 'experiments/config.yml'
-images_path = '../DATASET_INPAINTING/temp_gt/'
-masks_path = None#'../DATASET_INPAINTING/images'
-checkpoint = None
-training = True
-
-
 def plot_image(tensor, exit=False):
     import matplotlib.pyplot as plt 
     plt.imshow(tensor.permute(1,2,0).detach().numpy())
@@ -27,8 +19,18 @@ def plot_image(tensor, exit=False):
     if exit:
         exit()
 
+
 os.system("clear")
 def main():
+
+    # ARGS 
+    config_path = 'experiments/config.yml'
+    images_path = '../DATASET_INPAINTING/temp_gt/'
+    masks_path = None #'../DATASET_INPAINTING/images'
+    checkpoint = None
+    training = True
+
+
     # load config
     code_path = './'
     with open(os.path.join(code_path, config_path), 'r') as f:
@@ -43,6 +45,9 @@ def main():
     # cuda visble devices
     os.environ['CUDA_VISIBLE_DEVICES'] = config["gpu"]
     
+    if images_path is None:
+        images_path = config['path']['train']
+
     # init device
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -88,8 +93,6 @@ def main():
                 masks = items['mask'].to(device)
                 padded_images = items['padded_image'].to(device)
                 
-                images = (images/255).float()
-                
                 # Forward pass
                 # TODO inpainting_model.train() with losses
                 outputs, loss = inpainting_model.process(images, masks, padded_images)
@@ -99,16 +102,14 @@ def main():
                 #logger.add_scalar('loss_l1', loss['l1'].item(), global_step=step)
                 logger.add_scalar('loss_mse', loss['mse'].item(), global_step=step)
 
-                if i % 100 == 0:
+                if i % 1 == 0:
                     print("step:", i, "\tmse:", loss["mse"].item())
-                    
-                    #images = outputs.detach() * 255
-                    grid = torchvision.utils.make_grid(images*255, nrow=4)
-                    logger.add_image('gt_images', grid, step)
-
-                    #images = outputs.detach() * 255
-                    grid = torchvision.utils.make_grid(outputs.detach()*255, nrow=4)
+                
+                    grid = torchvision.utils.make_grid(outputs.detach(), nrow=4)
                     logger.add_image('outputs', grid, step)
+
+                    grid = torchvision.utils.make_grid(images, nrow=4)
+                    logger.add_image('gt', grid, step)
 
                 keep_training = False
 
