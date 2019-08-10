@@ -103,8 +103,8 @@ def main():
                     grid = torchvision.utils.make_grid(images, nrow=4)
                     logger.add_image('gt', grid, step)
                 
-                    grid = torchvision.utils.make_grid((residuals.detach()*(1-masks.detach())), nrow=4)
-                    logger.add_image('residuals', grid, step)
+                    #grid = torchvision.utils.make_grid((residuals.detach()*(1-masks.detach())), nrow=4)
+                    #logger.add_image('residuals', grid, step)
 
                 if step % config['training']['save_iters'] == 0:
                     # TODO Eval metrics 
@@ -114,7 +114,7 @@ def main():
                     keep_training = False
                     break
 
-                progbar.add(len(images), values=[('iter', step), ('loss', loss.detach().numpy())] + logs)
+                progbar.add(len(images), values=[('iter', step), ('loss', loss.cpu().detach().numpy())] + logs)
 
 
     # generator test

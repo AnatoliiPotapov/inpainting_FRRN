@@ -1,5 +1,5 @@
 path:
-  train: '../DATASET_INPAINTING/images/' #'/mnt/data1/home/a.s.potapov/data/inpainting/DATASET_INPAINTING/train_gt/'
+  train: '/mnt/data1/home/a.s.potapov/data/inpainting/DATASET_INPAINTING/train_gt/'
   experiment: './experiments/dummy/'
 
 dataset:
@@ -14,10 +14,10 @@ dataset:
 
 architecture:
   # iteration
-  num_blocks: 3
+  num_blocks: 5
 
 training:
-  batch_size: 1          #8 
+  batch_size: 12          #8 
   learning_rate: 0.0001   # set learning rate for training generator and discriminator as 10:1
   beta1: 0                # 0
   beta2: 0.9              # 0.9
@@ -31,5 +31,5 @@ training:
   save_iters: 100
   max_iteration: 1000000
 
-gpu: [0] #[0,1,2,3]
+gpu: '0' #[0,1,2,3]
 seed: 1337

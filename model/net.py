@@ -86,10 +86,6 @@ class InpaintingModel(BaseModel):
         # losses 
         mse_loss = self.mse_loss(outputs, images_gt)
         mse_loss *= self.mse_loss_weight
-
-        new_mse_loss = self.mse_loss(outputs* (1-masks), images_gt* (1-masks))
-        new_mse_loss *= self.mse_loss_weight
-
         style_loss = self.style_loss(outputs * (1-masks), images_gt * (1-masks))
         style_loss *= self.style_loss_weight
         rec_loss = self.l1_loss(outputs * (1-masks), images_gt * (1-masks))
@@ -99,7 +95,6 @@ class InpaintingModel(BaseModel):
         loss = style_loss + mse_loss + rec_loss
         logs = [
             ("mse", mse_loss.item()),
-            ("new_mse", new_mse_loss.item()),
             ("style", style_loss.item()),
             ("rec", rec_loss.item()),
         ]

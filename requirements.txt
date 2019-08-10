@@ -4,8 +4,10 @@ pandas
 matplotlib
 tqdm
 pyyaml
-torch==1.1.0.post2
+torch==1.1.0
 tensorflow==2.0.0-beta1
 torchvision
 scikit-image
 pytorch-memlab
+pillow==4.1.0
+scipy==1.0.1
