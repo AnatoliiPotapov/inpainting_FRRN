@@ -4,7 +4,6 @@ import torch
 from torch import nn
 
 from model.layers import InpaintingGenerator
-from model.utils import pad_image
 from model.loss import AdversarialLoss, StyleLoss
 
 
@@ -43,9 +42,9 @@ class BaseModel(nn.Module):
 
 
 class InpaintingModel(BaseModel):
-    def __init__(self, config):
+    def __init__(self, config, initial_mask):
         super(InpaintingModel, self).__init__('InpaintingModel', config)
-        generator = InpaintingGenerator(config)
+        generator = InpaintingGenerator(config, initial_mask)
 
         if config["gpu"]:
             gpus = [int(i) for i in config["gpu"].split(",")]
@@ -74,37 +73,41 @@ class InpaintingModel(BaseModel):
         self.optimizer = torch.optim.Adam(generator.parameters(), 
                                      lr=learning_rate, betas=betas)
 
-    def process(self, images, masks, pad_image):
+    def process(self, images, masks):
         self._iteration += 1
+        images_gt = images.clone().detach().requires_grad_(False)
 
         # zero optimizers
         self.optimizer.zero_grad()
 
-        images_gt = images.clone()
-
         # process outputs
-        outputs = self(images_gt, masks, pad_image)
+        outputs, residuals = self(images, masks)
         
         # losses 
-        mse_loss = self.mse_loss(outputs, images)
+        mse_loss = self.mse_loss(outputs, images_gt)
         mse_loss *= self.mse_loss_weight
-        style_loss = self.style_loss(outputs * (1-masks), images * (1-masks))
+
+        new_mse_loss = self.mse_loss(outputs* (1-masks), images_gt* (1-masks))
+        new_mse_loss *= self.mse_loss_weight
+
+        style_loss = self.style_loss(outputs * (1-masks), images_gt * (1-masks))
         style_loss *= self.style_loss_weight
-        rec_loss = self.l1_loss(outputs * (1-masks), images * (1-masks))
+        rec_loss = self.l1_loss(outputs * (1-masks), images_gt * (1-masks))
         rec_loss *= self.rec_loss_weight
         # TODO Step loss
          
         loss = style_loss + mse_loss + rec_loss
         logs = [
             ("mse", mse_loss.item()),
+            ("new_mse", new_mse_loss.item()),
             ("style", style_loss.item()),
             ("rec", rec_loss.item()),
         ]
         
-        return outputs, loss, logs
+        return outputs, residuals, loss, logs
 
-    def forward(self, images, masks, pad_masks):
-        return self.generator(images, masks, pad_masks)
+    def forward(self, images, masks):
+        return self.generator(images, masks)
 
     def backward(self, loss):
         loss.backward()

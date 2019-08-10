@@ -1,15 +1,15 @@
 path:
-  train: '../DATASET_INPAINTING/temp_gt/'
+  train: '../DATASET_INPAINTING/images/' #'/mnt/data1/home/a.s.potapov/data/inpainting/DATASET_INPAINTING/train_gt/'
   experiment: './experiments/dummy/'
 
 dataset:
   centered: False
-  mask_height: 20
-  mask_width: 20
-  image_height: 128
-  image_width: 128
+  mask_height: 50
+  mask_width: 50
+  image_height: 600
+  image_width: 500
   max_masks_count: 5
-  num_workers: 10
+  num_workers: 8
   factor: 8
 
 architecture:
@@ -17,7 +17,7 @@ architecture:
   num_blocks: 3
 
 training:
-  batch_size: 2           #8 
+  batch_size: 1          #8 
   learning_rate: 0.0001   # set learning rate for training generator and discriminator as 10:1
   beta1: 0                # 0
   beta2: 0.9              # 0.9
@@ -28,8 +28,8 @@ training:
   step_loss_weight: 2     # 2
   adv_loss_weight: 0.1    # 0.1
   
-  save_iters: 2
+  save_iters: 100
   max_iteration: 1000000
 
-gpu: ''
+gpu: [0] #[0,1,2,3]
 seed: 1337

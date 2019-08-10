@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 from skimage import io
 
-from model.utils import pad_image
+from utils.model import pad_image
 
 
 # TODO migrate from np to torch

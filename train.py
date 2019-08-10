@@ -8,10 +8,11 @@ import torchvision
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 
+from utils.masks import get_constant_mask
 from model.net import InpaintingModel
 from data.dataset import Dataset
 from scripts.metrics import compare_psnr
-from model.utils import Progbar
+from utils.progbar import Progbar
 
 
 os.system("clear")
@@ -56,7 +57,8 @@ def main():
     logger = SummaryWriter(log_dir=config['path']['experiment'])
 
     # build the model and initialize
-    inpainting_model = InpaintingModel(config).to(device)
+    initial_mask = get_constant_mask().to(device)
+    inpainting_model = InpaintingModel(config, initial_mask).to(device)
     if checkpoint:
         inpainting_model.load()
 
@@ -67,7 +69,7 @@ def main():
         batch_size = config['training']['batch_size']
 
         # create dataset
-        dataset = Dataset(config['dataset'], images_path, masks_path, training)
+        dataset = Dataset(config['dataset'], config['path']['train'], masks_path, training)
         train_loader = dataset.create_iterator(batch_size)
 
         # Train the generator
@@ -85,12 +87,9 @@ def main():
             for i, items in enumerate(train_loader):
                 images = items['image'].to(device)
                 masks = items['mask'].to(device)
-                padded_images = items['padded_image'].to(device)
                 
                 # Forward pass
-                # TODO inpainting_model.train() with losses
-                outputs, loss, logs = inpainting_model.process(images, masks, padded_images)
-                inpainting_model.backward(loss)
+                outputs, residuals, loss, logs = inpainting_model.process(images, masks)
                 step = inpainting_model._iteration
 
                 # Adding losses to Tensorboard
@@ -104,6 +103,9 @@ def main():
                     grid = torchvision.utils.make_grid(images, nrow=4)
                     logger.add_image('gt', grid, step)
                 
+                    grid = torchvision.utils.make_grid((residuals.detach()*(1-masks.detach())), nrow=4)
+                    logger.add_image('residuals', grid, step)
+
                 if step % config['training']['save_iters'] == 0:
                     # TODO Eval metrics 
                     inpainting_model.save()

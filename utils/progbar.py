@@ -3,29 +3,7 @@ import sys
 import time
 import random
 
-import torch
 import numpy as np
-
-
-def plot_image(tensor, exit=False):
-    import matplotlib.pyplot as plt 
-    plt.imshow(tensor.permute(1,2,0).detach().numpy())
-    plt.show()
-    if exit:
-        exit()
-
-
-def pad_image(image, mask, factor=8):
-    """
-    PAD
-    """
-    pad_y = (factor - image.shape[-2] % factor) % factor
-    pad_x = (factor - image.shape[-1] % factor) % factor
-    
-    pad_mask = torch.ones(mask.shape, device=mask.device)
-    pad = torch.nn.ConstantPad2d((0, pad_x, 0, pad_y), 0)
-
-    return pad(image), pad(mask), pad(pad_mask)
 
 
 class Progbar(object):
