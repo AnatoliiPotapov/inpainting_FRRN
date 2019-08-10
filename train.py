@@ -96,7 +96,7 @@ def main():
                 #logger.add_scalar('loss_l1', loss['l1'].item(), global_step=step)
                 logger.add_scalar('loss_mse', loss['mse'].item(), global_step=step)
 
-                if i % 1 == 0:
+                if i % 100 == 0:
                     #print("step:", i, "\tmse:", loss["mse"].item())
                     grid = torchvision.utils.make_grid(outputs, nrow=4)
                     logger.add_image('outputs', grid, step)
@@ -112,7 +112,8 @@ def main():
                     keep_training = False
                     break
 
-                progbar.add(len(images), values=[('mse', loss["mse"].item())])
+                progbar.add(len(images), values=[('iter', step),
+                                                 ('mse', loss["mse"].item())])
 
 
     # generator test
