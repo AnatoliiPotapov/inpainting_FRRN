@@ -89,15 +89,15 @@ def main():
                 
                 # Forward pass
                 # TODO inpainting_model.train() with losses
-                outputs, loss = inpainting_model.process(images, masks, padded_images)
-                inpainting_model.backward(mse_loss=loss['mse'])
+                outputs, loss, logs = inpainting_model.process(images, masks, padded_images)
+                inpainting_model.backward(loss)
                 step = inpainting_model._iteration
 
-                #logger.add_scalar('loss_l1', loss['l1'].item(), global_step=step)
-                logger.add_scalar('loss_mse', loss['mse'].item(), global_step=step)
+                # Adding losses to Tensorboard
+                for log in logs:
+                    logger.add_scalar(log[0], log[1], global_step=step)
 
                 if i % 100 == 0:
-                    #print("step:", i, "\tmse:", loss["mse"].item())
                     grid = torchvision.utils.make_grid(outputs, nrow=4)
                     logger.add_image('outputs', grid, step)
 
@@ -105,15 +105,14 @@ def main():
                     logger.add_image('gt', grid, step)
                 
                 if step % config['training']['save_iters'] == 0:
-                    # Eval metrics 
+                    # TODO Eval metrics 
                     inpainting_model.save()
 
                 if step >= config['training']['max_iteration']:
                     keep_training = False
                     break
 
-                progbar.add(len(images), values=[('iter', step),
-                                                 ('mse', loss["mse"].item())])
+                progbar.add(len(images), values=[('iter', step), ('loss', loss.detach().numpy())] + logs)
 
 
     # generator test
