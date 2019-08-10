@@ -44,10 +44,12 @@ def main():
         device = torch.device("cpu")
 
     # initialize random seed
+    
     torch.manual_seed(config["seed"])
     torch.cuda.manual_seed_all(config["seed"])
-    np.random.seed(config["seed"])
-    random.seed(config["seed"])
+    if not training:
+        np.random.seed(config["seed"])
+        random.seed(config["seed"])
 
     # parse args
     images_path = config['path']['train']
@@ -73,50 +75,50 @@ def main():
         train_loader = dataset.create_iterator(batch_size)
 
         # Train the generator
-        keep_training = True
         total = len(dataset)
         if total == 0:
             raise Exception("Dataset is empty!")
 
-        # TODO epoch
+        # Training loop
         epoch = 0
-        while keep_training:
-            epoch += 1
-            progbar = Progbar(total, width=20, stateful_metrics=['epoch', 'iter'])
+        for i, items in enumerate(train_loader):
+        
+            if i%total == 0:
+                epoch += 1
+                print('Epoch', epoch)
+                progbar = Progbar(total, width=20, stateful_metrics=['iter'])
+                
+            images = items['image'].to(device)
+            masks = items['mask'].to(device)
             
-            for i, items in enumerate(train_loader):
-                images = items['image'].to(device)
-                masks = items['mask'].to(device)
-                
-                # Forward pass
-                outputs, residuals, loss, logs = inpainting_model.process(images, masks)
-                step = inpainting_model._iteration
+            # Forward pass
+            outputs, residuals, loss, logs = inpainting_model.process(images, masks)
+            step = inpainting_model._iteration
 
-                # Adding losses to Tensorboard
-                for log in logs:
-                    logger.add_scalar(log[0], log[1], global_step=step)
+            # Adding losses to Tensorboard
+            for log in logs:
+                logger.add_scalar(log[0], log[1], global_step=step)
 
-                if i % 100 == 0:
-                    grid = torchvision.utils.make_grid(outputs, nrow=4)
-                    logger.add_image('outputs', grid, step)
+            if i % 100 == 0:
+                grid = torchvision.utils.make_grid(outputs, nrow=4)
+                logger.add_image('outputs', grid, step)
 
-                    grid = torchvision.utils.make_grid(images, nrow=4)
-                    logger.add_image('gt', grid, step)
-                
-                    #grid = torchvision.utils.make_grid((residuals.detach()*(1-masks.detach())), nrow=4)
-                    #logger.add_image('residuals', grid, step)
+                grid = torchvision.utils.make_grid(images, nrow=4)
+                logger.add_image('gt', grid, step)
+            
+                #grid = torchvision.utils.make_grid((residuals.detach()*(1-masks.detach())), nrow=4)
+                #logger.add_image('residuals', grid, step)
 
-                if step % config['training']['save_iters'] == 0:
-                    # TODO Eval metrics 
-                    inpainting_model.save()
+            if step % config['training']['save_iters'] == 0:
+                # TODO Eval metrics 
+                inpainting_model.save()
 
-                if step >= config['training']['max_iteration']:
-                    keep_training = False
-                    break
+            if step >= config['training']['max_iteration']:
+                keep_training = False
+                break
 
-                progbar.add(len(images), values=[('iter', step), ('loss', loss.cpu().detach().numpy())] + logs)
-
-
+            progbar.add(len(images), values=[('iter', step), 
+                                                ('loss', loss.cpu().detach().numpy())] + logs)
     # generator test
     else:
         print('\nStart testing...\n')
