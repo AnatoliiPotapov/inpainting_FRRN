@@ -12,12 +12,13 @@ class BaseModel(nn.Module):
         super(BaseModel, self).__init__()
         
         self.name = name
-        self.checkpoint = config["architecture"]["checkpoint"]
+        self.checkpoint = config["path"]["experiment"]
+        self.checkpoint += self.name + '.ckpt'
         self._iteration = 0 #config["iteration"]
     
     # TODO save/load discriminator logic
     def load(self):
-        if os.path.exists(self.checkpoint):
+        if os.path.isfile(self.checkpoint):
             print('Loading %s model...' % self.name)
 
             if torch.cuda.is_available():
@@ -28,6 +29,8 @@ class BaseModel(nn.Module):
             # TODO self.generator
             self.generator.load_state_dict(data['generator'])
             self._iteration = data['iteration']
+        else:
+            print('Checkpoint %s not found!' % self.checkpoint)
 
     def save(self):
         print('Saving %s...\n' % self.name)
@@ -71,11 +74,11 @@ class InpaintingModel(BaseModel):
         images_gt = images.clone()
 
         # process outputs
-        outputs = self(images, masks, pad_image)
+        outputs = self(images_gt, masks, pad_image)
         
         losses = {
-            "l1": self.l1_loss(outputs, images_gt),
-            "mse": self.mse_loss(outputs, images_gt),
+            "l1": self.l1_loss(outputs, images),
+            "mse": self.mse_loss(outputs, images),
         }
 
         return outputs, losses

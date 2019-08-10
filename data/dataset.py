@@ -23,9 +23,8 @@ def create_mask(mask_height, mask_width,
         mask[mask_y:mask_y + mask_height, mask_x:mask_x + mask_width] = 0.0
     else:
         for _ in range(np.random.randint(1, max_masks_count+1)):
-            #TODO sizes
-            #mask_width = np.random.randint(100, 150)
-            #mask_height = np.random.randint(100, 150)
+            mask_width += np.random.randint(0, 30)
+            mask_height += np.random.randint(0, 30)
             
             mask_x = np.random.randint(0, width - mask_width)
             mask_y = np.random.randint(0, height - mask_height)

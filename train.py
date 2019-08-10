@@ -10,6 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from model.net import InpaintingModel
 from data.dataset import Dataset
+from scripts.metrics import compare_psnr
 
 
 def plot_image(tensor, exit=False):
@@ -25,11 +26,8 @@ def main():
 
     # ARGS 
     config_path = 'experiments/config.yml'
-    images_path = '../DATASET_INPAINTING/temp_gt/'
-    masks_path = None #'../DATASET_INPAINTING/images'
-    checkpoint = None
+    masks_path = None
     training = True
-
 
     # load config
     code_path = './'
@@ -45,9 +43,6 @@ def main():
     # cuda visble devices
     os.environ['CUDA_VISIBLE_DEVICES'] = config["gpu"]
     
-    if images_path is None:
-        images_path = config['path']['train']
-
     # init device
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -61,13 +56,17 @@ def main():
     np.random.seed(config["seed"])
     random.seed(config["seed"])
 
+    # parse args
+    images_path = config['path']['train']
+    checkpoint = config['path']['experiment']
+
     # initialize log writer
     logger = SummaryWriter(log_dir=config['path']['experiment'])
 
     # build the model and initialize
     inpainting_model = InpaintingModel(config).to(device)
     if checkpoint:
-        inpainting_model.load(checkpoint)
+        inpainting_model.load()
 
     # generator training
     if training:
@@ -105,11 +104,15 @@ def main():
                 if i % 1 == 0:
                     print("step:", i, "\tmse:", loss["mse"].item())
                 
-                    grid = torchvision.utils.make_grid(outputs.detach(), nrow=4)
+                    grid = torchvision.utils.make_grid(outputs, nrow=4)
                     logger.add_image('outputs', grid, step)
 
                     grid = torchvision.utils.make_grid(images, nrow=4)
                     logger.add_image('gt', grid, step)
+                
+                if step % config['training']['save_iters'] == 0:
+                    # Eval metrics 
+                    inpainting_model.save()
 
                 keep_training = False
 
