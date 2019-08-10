@@ -11,19 +11,11 @@ from torch.utils.tensorboard import SummaryWriter
 from model.net import InpaintingModel
 from data.dataset import Dataset
 from scripts.metrics import compare_psnr
-
-
-def plot_image(tensor, exit=False):
-    import matplotlib.pyplot as plt 
-    plt.imshow(tensor.permute(1,2,0).detach().numpy())
-    plt.show()
-    if exit:
-        exit()
+from model.utils import Progbar
 
 
 os.system("clear")
 def main():
-
     # ARGS 
     config_path = 'experiments/config.yml'
     masks_path = None
@@ -44,7 +36,7 @@ def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = config["gpu"]
     
     # init device
-    if torch.cuda.is_available():
+    if config['gpu'] and torch.cuda.is_available():
         device = torch.device("cuda")
         torch.backends.cudnn.benchmark = True   # cudnn auto-tuner
     else:
@@ -84,9 +76,12 @@ def main():
         if total == 0:
             raise Exception("Dataset is empty!")
 
+        # TODO epoch
+        epoch = 0
         while keep_training:
-            #progbar = Progbar(total, width=20, stateful_metrics=['epoch', 'iter'])
-
+            epoch += 1
+            progbar = Progbar(total, width=20, stateful_metrics=['epoch', 'iter'])
+            
             for i, items in enumerate(train_loader):
                 images = items['image'].to(device)
                 masks = items['mask'].to(device)
@@ -102,8 +97,7 @@ def main():
                 logger.add_scalar('loss_mse', loss['mse'].item(), global_step=step)
 
                 if i % 1 == 0:
-                    print("step:", i, "\tmse:", loss["mse"].item())
-                
+                    #print("step:", i, "\tmse:", loss["mse"].item())
                     grid = torchvision.utils.make_grid(outputs, nrow=4)
                     logger.add_image('outputs', grid, step)
 
@@ -114,7 +108,12 @@ def main():
                     # Eval metrics 
                     inpainting_model.save()
 
-                keep_training = False
+                if step >= config['training']['max_iteration']:
+                    keep_training = False
+                    break
+
+                progbar.add(len(images), values=[('mse', loss["mse"].item())])
+
 
     # generator test
     else:

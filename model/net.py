@@ -33,7 +33,7 @@ class BaseModel(nn.Module):
             print('Checkpoint %s not found!' % self.checkpoint)
 
     def save(self):
-        print('Saving %s...\n' % self.name)
+        print('\nSaving %s...\n' % self.name)
         torch.save({
             'iteration': self._iteration,
             # TODO self.generator

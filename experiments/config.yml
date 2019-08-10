@@ -23,6 +23,7 @@ training:
   beta1: 0                # 0
   beta2: 0.9              # 0.9
   save_iters: 2
+  max_iteration: 100
 
-gpu: '0'
+gpu: ''
 seed: 1337
