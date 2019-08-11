@@ -114,7 +114,6 @@ def main():
                 inpainting_model.save()
 
             if step >= config['training']['max_iteration']:
-                keep_training = False
                 break
 
             progbar.add(len(images), values=[('iter', step), 

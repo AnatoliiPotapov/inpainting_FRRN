@@ -9,5 +9,5 @@ tensorflow==2.0.0-beta1
 torchvision
 scikit-image
 pytorch-memlab
-pillow==4.1.0
+pillow
 scipy==1.0.1

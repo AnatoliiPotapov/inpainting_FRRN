@@ -13,32 +13,37 @@ class BaseModel(nn.Module):
         
         self.name = name
         self.checkpoint = config["path"]["experiment"]
-        self.checkpoint += self.name + '.ckpt'
-        self._iteration = 0 #config["iteration"]
+        self._iteration = 0
     
     # TODO save/load discriminator logic
     def load(self):
-        if os.path.isfile(self.checkpoint):
-            print('Loading %s model...' % self.name)
+        files = os.listdir(self.checkpoint)
+        iterations = []
+        for f in os.listdir(self.checkpoint):
+            if '.ckpt' in f:
+                iterations.append(f.split('-')[-1])
+
+        if iterations:
+            checkpoint = self.checkpoint + self.name + '.ckpt-' + max(iterations)
+            print('Loading %s model...' % checkpoint)
 
             if torch.cuda.is_available():
-                data = torch.load(self.checkpoint)
+                data = torch.load(checkpoint)
             else:
-                data = torch.load(self.checkpoint, map_location=lambda storage, loc: storage)
+                data = torch.load(checkpoint, map_location=lambda storage, loc: storage)
             
-            # TODO self.generator
             self.generator.load_state_dict(data['generator'])
             self._iteration = data['iteration']
         else:
-            print('Checkpoint %s not found!' % self.checkpoint)
+            print('Checkpoint', self.checkpoint + self.name + '.ckpt-{iter}', 'not found!')
 
     def save(self):
-        print('\nSaving %s...\n' % self.name)
+        checkpoint = self.checkpoint + self.name + '.ckpt-' + str(self._iteration)
+        print('\nSaving %s...\n' % checkpoint)
         torch.save({
             'iteration': self._iteration,
-            # TODO self.generator
             'generator': self.generator.state_dict()
-        }, self.checkpoint)
+        }, checkpoint)
 
 
 class InpaintingModel(BaseModel):
