@@ -63,6 +63,7 @@ class InpaintingModel(BaseModel):
         l1_loss = nn.L1Loss()
         self.add_module('l1_loss', l1_loss)
         self.rec_loss_weight = config['training']["rec_loss_weight"]
+        self.step_loss_weight = config['training']["step_loss_weight"]
 
         mse_loss = nn.MSELoss()
         self.add_module('mse_loss', mse_loss)
@@ -86,22 +87,30 @@ class InpaintingModel(BaseModel):
         self.optimizer.zero_grad()
 
         # process outputs
-        outputs, residuals = self(images, masks)
-        
+        outputs, residuals, res_masks = self(images, masks)
+
         # losses 
         mse_loss = self.mse_loss(outputs, images_gt)
         mse_loss *= self.mse_loss_weight
+        
         style_loss = self.style_loss(outputs * (1-masks), images_gt * (1-masks))
         style_loss *= self.style_loss_weight
+        
         rec_loss = self.l1_loss(outputs * (1-masks), images_gt * (1-masks))
         rec_loss *= self.rec_loss_weight
-        # TODO Step loss
-         
-        loss = style_loss + mse_loss + rec_loss
+        
+        step_loss = 0
+        for r, m in zip(residuals, res_masks):
+            step_loss += torch.mean(torch.abs((r-images_gt)*m))
+        step_loss /= len(residuals)
+        step_loss *= self.step_loss_weight
+
+        loss = style_loss + mse_loss + rec_loss + step_loss
         logs = [
             ("mse", mse_loss.item()),
             ("style", style_loss.item()),
             ("rec", rec_loss.item()),
+            ("step", step_loss.item()),
         ]
         
         return outputs, residuals, loss, logs

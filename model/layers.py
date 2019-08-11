@@ -107,10 +107,12 @@ class InpaintingGenerator(nn.Module):
         result = image.clone() * mask
 
         output = []
+        res_masks = []
         for m in self.frrb:
             residuals, mask = m(result, mask)
-            residuals = residuals * (mask - initial_mask)
+            res_masks.append(mask - initial_mask)
+            residuals = residuals * res_masks[-1]
             output.append(residuals)
             result = (result+residuals).clamp(max=1.0, min=0.0)
         
-        return result, output 
+        return result, output, res_masks
