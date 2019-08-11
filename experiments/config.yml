@@ -1,6 +1,6 @@
 path:
-  train: '/mnt/data1/home/a.s.potapov/data/inpainting/DATASET_INPAINTING/train_gt/'
-  experiment: './experiments/dummy/'
+  train: '/content/gdrive/My Drive/inpaiting/DATASET_INPAINTING/images/'
+  experiment: '/content/gdrive/My Drive/inpaiting/temp/'
 
 dataset:
   centered: False
@@ -13,19 +13,18 @@ dataset:
   factor: 8
 
 architecture:
-  # iteration
-  num_blocks: 5
+  num_blocks: 4
 
 training:
-  batch_size: 12          #8 
+  batch_size: 1           #8 
   learning_rate: 0.0001   # set learning rate for training generator and discriminator as 10:1
   beta1: 0                # 0
   beta2: 0.9              # 0.9
   mse_loss_weight: 1      # 0
   style_loss_weight: 100  # 100
   rec_loss_weight: 20     # 20
-  # not implemented
   step_loss_weight: 2     # 2
+  # not implemented
   adv_loss_weight: 0.1    # 0.1
   
   save_iters: 100

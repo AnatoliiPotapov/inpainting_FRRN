@@ -97,7 +97,10 @@ class InpaintingGenerator(nn.Module):
     """
     def __init__(self, config, pad_mask):
         super(InpaintingGenerator, self).__init__()
-        self.frrb = nn.ModuleList([
+        self.frrb_1 = nn.ModuleList([
+            FRRB(constant_mask=pad_mask) for i in range(config["architecture"]["num_blocks"])
+        ])
+        self.frrb_2 = nn.ModuleList([
             FRRB(constant_mask=pad_mask) for i in range(config["architecture"]["num_blocks"])
         ])
 
@@ -106,13 +109,16 @@ class InpaintingGenerator(nn.Module):
         initial_mask = mask.clone().detach()
         result = image.clone() * mask
 
-        output = []
+        residuals = []
         res_masks = []
-        for m in self.frrb:
-            residuals, mask = m(result, mask)
+        for f_1, f_2 in zip(self.frrb_1, self.frrb_2):
+            residual_1, _ = f_1(result, mask)
+            result_1 = result + residual_1 * (1 - initial_mask)
+            residual_2, mask = f_2(result_1, mask)
+            result = result_1 + residual_2 * (1 - initial_mask)
+            result = result.clamp(min=0.0, max=1.0)
+
             res_masks.append(mask - initial_mask)
-            residuals = residuals * res_masks[-1]
-            output.append(residuals)
-            result = (result+residuals).clamp(max=1.0, min=0.0)
-        
-        return result, output, res_masks
+            residuals.append(result)
+            
+        return result, residuals, res_masks
