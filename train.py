@@ -95,6 +95,9 @@ def main():
             outputs, residuals, loss, logs = inpainting_model.process(images, masks)
             step = inpainting_model._iteration
 
+            # Backward pass
+            inpainting_model.backward(loss)
+
             # Adding losses to Tensorboard
             for log in logs:
                 logger.add_scalar(log[0], log[1], global_step=step)
@@ -117,7 +120,7 @@ def main():
                 break
 
             progbar.add(len(images), values=[('iter', step), 
-                                                ('loss', loss.cpu().detach().numpy())] + logs)
+                                             ('loss', loss.cpu().detach().numpy())] + logs)
     # generator test
     else:
         print('\nStart testing...\n')
