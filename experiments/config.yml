@@ -1,5 +1,5 @@
 path:
-  train: '/mnt/chatbot_models/v.karmazin/Datasets/data_large/'
+  train: '/mnt/data1/home/a.s.potapov/data/inpainting/Places365/data_large/'
   experiment: './experiments/dummy/'
 
 dataset:
@@ -27,9 +27,9 @@ training:
   # not implemented
   adv_loss_weight: 0.1    # 0.1
   
-  save_iters: 100
+  save_iters: 500
   max_iteration: 1000000
-  tf_summary_iters: 10
+  tf_summary_iters: 200
 
 gpu: '1' #[0,1,2,3]
 seed: 1337

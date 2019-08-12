@@ -21,10 +21,10 @@ class BaseModel(nn.Module):
         iterations = []
         for f in os.listdir(self.checkpoint):
             if '.ckpt' in f:
-                iterations.append(f.split('-')[-1])
-
+                iterations.append(int(f.split('-')[-1]))
+        
         if iterations:
-            checkpoint = self.checkpoint + self.name + '.ckpt-' + max(iterations)
+            checkpoint = self.checkpoint + self.name + '.ckpt-' + str(max(iterations))
             print('Loading %s model...' % checkpoint)
 
             if torch.cuda.is_available():

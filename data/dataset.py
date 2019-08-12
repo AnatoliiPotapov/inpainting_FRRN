@@ -81,7 +81,9 @@ class Dataset(torch.utils.data.Dataset):
     def _load_item(self, index):
         image = io.imread(self.images[index])
         image = self._to_tensor(image)
-
+        
+        assert image.size()[0] == 3
+        
         # crop image
         image = image[:, :self.image_height, :self.image_width]
 
