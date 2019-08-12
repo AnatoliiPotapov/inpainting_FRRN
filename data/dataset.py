@@ -40,17 +40,26 @@ class Dataset(torch.utils.data.Dataset):
         super(Dataset, self).__init__()
         
         # loading config 
-        self.centered = config["centered"]
-        self.mask_width = config["mask_width"]
-        self.mask_height = config["mask_height"]
-        self.image_width = config["image_width"]
-        self.image_height = config["image_height"]
-        self.max_masks_count = config["max_masks_count"]
-        self.num_workers = config["num_workers"]
-        self.factor = config["factor"]
+        self.centered = config['dataset']["centered"]
+        self.mask_width = config['dataset']["mask_width"]
+        self.mask_height = config['dataset']["mask_height"]
+        self.image_width = config['dataset']["image_width"]
+        self.image_height = config['dataset']["image_height"]
+        self.max_masks_count = config['dataset']["max_masks_count"]
+        self.num_workers = config['dataset']["num_workers"]
+        self.factor = config['dataset']["factor"]
         
         # loading dataset
-        self.images = self._load_data(images_path)
+        self.flist_path = config['path']["experiment"] + 'file_list.txt'
+        if os.path.isfile(self.flist_path):
+            print('Loading file list...', self.flist_path)
+            self.images = self._read_data_from_file()
+        else:
+            print('Creating new file list...', self.flist_path)
+            self.images = self._load_data(images_path)
+
+        print('Images in dataset:', len(self.images))
+
         self.masks = None
         if masks_path:
             self.masks = self._load_data(masks_path)
@@ -71,30 +80,49 @@ class Dataset(torch.utils.data.Dataset):
         
     def _load_item(self, index):
         image = io.imread(self.images[index])
-        
+        image = self._to_tensor(image)
+
+        # crop image
+        image = image[:, :self.image_height, :self.image_width]
+
         if self.masks:
             mask = io.imread(self.masks[index])
         elif not self.training:
             pass # TODO detect mask from image
         else:
             mask = create_mask(self.mask_width, self.mask_height, 
-                               width=self.image_width, height=self.image_height, 
+                               width=image.size()[2], height=image.size()[1], 
                                centered=self.centered, max_masks_count=self.max_masks_count)
         
-        image = self._to_tensor(image)
         mask = self._to_tensor(mask)
+        
+        # padding image
         if self.factor:
-            image, mask, padded_mask = pad_image(image, mask, self.factor)
-            
+            image, mask, constant_mask = pad_image(image, mask, factor=self.factor,
+                                                   width=self.image_width, 
+                                                   height=self.image_height)
+        
         return {
-            'image': image, # TODO return damaged?
+            'image': image,
             'mask': mask,
-            'padded_image': padded_mask,
+            'constant_mask': constant_mask,
         }
 
     def _load_data(self, data_path):
-        files = list(glob.glob(data_path + '/*.jpg')) + list(glob.glob(data_path + '/*.png'))
+        files = (
+            list(glob.glob(data_path + '**/*.jpg', recursive=True)) + 
+            list(glob.glob(data_path + '**/*.png', recursive=True))
+        )
         files.sort()
+        with open(self.flist_path, 'w') as f:
+            for path in files:
+                f.write(path + '\n')
+        return files
+
+    def _read_data_from_file(self):
+        files = None
+        with open(self.flist_path, 'r') as f:
+            files = f.read().split('\n')[:-1]
         return files
 
     def _to_tensor(self, image):

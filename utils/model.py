@@ -1,13 +1,18 @@
 import torch
 
 
-def pad_image(image, mask, factor=8):
+def pad_image(image, mask, width, height, factor=8):
     """
     PAD
     """
-    pad_y = (factor - image.shape[-2] % factor) % factor
-    pad_x = (factor - image.shape[-1] % factor) % factor
+    image_h, image_w = image.size()[1:]
+
+    pad_y = height - image_h
+    pad_x = width - image_w
     
+    pad_y += (factor - height % factor) % factor
+    pad_x += (factor - width % factor) % factor
+
     pad_mask = torch.ones(mask.shape, device=mask.device)
     
     pad_zero = torch.nn.ConstantPad2d((0, pad_x, 0, pad_y), 0)

@@ -57,23 +57,22 @@ class Stack(nn.Module):
 
 
 class FRRB(nn.Module):
-    def __init__(self, constant_mask=None):
+    def __init__(self):
         super().__init__()
         self.conf = {
             'left': [(2,3,64,'r','relu'), (2,3,96,'r','relu'), (2,3,128,'r','relu'),
                      (1,3,96,'u','leaky'), (1,3,64,'u','leaky'), (1,3,3,'u','none')],
             'right': [(1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,3,'r','none')]
         }
-        self.register_buffer("constant_mask", constant_mask)
         self.left = self.get_pipeline_from_config(self.conf['left'])
         self.right = self.get_pipeline_from_config(self.conf['right'])
 
-    def forward(self, x, mask):
+    def forward(self, x, mask, constant_mask):
         left_r, left_mask = self.left(x, mask)
         right_r, right_mask = self.right(x, mask)
         mask = left_mask * right_mask 
-        if self.constant_mask is not None:
-            mask *= self.constant_mask
+        if constant_mask is not None:
+            mask *= constant_mask
         r = 0.5 * ((left_r + right_r) * mask).float()
         return r, mask   
 
@@ -95,26 +94,26 @@ class InpaintingGenerator(nn.Module):
     """
     InpaintingGenerator
     """
-    def __init__(self, config, pad_mask):
+    def __init__(self, config):
         super(InpaintingGenerator, self).__init__()
         self.frrb_1 = nn.ModuleList([
-            FRRB(constant_mask=pad_mask) for i in range(config["architecture"]["num_blocks"])
+            FRRB() for i in range(config["architecture"]["num_blocks"])
         ])
         self.frrb_2 = nn.ModuleList([
-            FRRB(constant_mask=pad_mask) for i in range(config["architecture"]["num_blocks"])
+            FRRB() for i in range(config["architecture"]["num_blocks"])
         ])
 
     @profile
-    def forward(self, image, mask):
+    def forward(self, image, mask, constant_mask):
         initial_mask = mask.clone().detach()
         result = image.clone() * mask
 
         residuals = []
         res_masks = []
         for f_1, f_2 in zip(self.frrb_1, self.frrb_2):
-            residual_1, _ = f_1(result, mask)
+            residual_1, _ = f_1(result, mask, constant_mask)
             result_1 = result + residual_1 * (1 - initial_mask)
-            residual_2, mask = f_2(result_1, mask)
+            residual_2, mask = f_2(result_1, mask, constant_mask)
             result = result_1 + residual_2 * (1 - initial_mask)
             result = result.clamp(min=0.0, max=1.0)
 

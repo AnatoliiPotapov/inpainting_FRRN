@@ -47,9 +47,9 @@ class BaseModel(nn.Module):
 
 
 class InpaintingModel(BaseModel):
-    def __init__(self, config, initial_mask):
+    def __init__(self, config):
         super(InpaintingModel, self).__init__('InpaintingModel', config)
-        generator = InpaintingGenerator(config, initial_mask)
+        generator = InpaintingGenerator(config)
 
         if config["gpu"]:
             gpus = [int(i) for i in config["gpu"].split(",")]
@@ -79,7 +79,7 @@ class InpaintingModel(BaseModel):
         self.optimizer = torch.optim.Adam(generator.parameters(), 
                                      lr=learning_rate, betas=betas)
 
-    def process(self, images, masks):
+    def process(self, images, masks, constant_mask):
         self._iteration += 1
         images_gt = images.clone().detach().requires_grad_(False)
 
@@ -87,7 +87,7 @@ class InpaintingModel(BaseModel):
         self.optimizer.zero_grad()
 
         # process outputs
-        outputs, residuals, res_masks = self(images, masks)
+        outputs, residuals, res_masks = self(images, masks, constant_mask)
 
         # losses 
         mse_loss = self.mse_loss(outputs, images_gt)
@@ -115,8 +115,8 @@ class InpaintingModel(BaseModel):
         
         return outputs, residuals, loss, logs
 
-    def forward(self, images, masks):
-        return self.generator(images, masks)
+    def forward(self, images, masks, constant_mask):
+        return self.generator(images, masks, constant_mask)
 
     def backward(self, loss):
         loss.backward()

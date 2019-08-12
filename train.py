@@ -59,11 +59,10 @@ def main():
     logger = SummaryWriter(log_dir=config['path']['experiment'])
 
     # build the model and initialize
-    initial_mask = get_constant_mask().to(device)
-    inpainting_model = InpaintingModel(config, initial_mask).to(device)
+    inpainting_model = InpaintingModel(config).to(device)
     if checkpoint:
         inpainting_model.load()
-
+    
     # generator training
     if training:
         print('\nStart training...\n')
@@ -71,7 +70,7 @@ def main():
         batch_size = config['training']['batch_size']
 
         # create dataset
-        dataset = Dataset(config['dataset'], config['path']['train'], masks_path, training)
+        dataset = Dataset(config, config['path']['train'], masks_path, training)
         train_loader = dataset.create_iterator(batch_size)
 
         # Train the generator
@@ -83,16 +82,17 @@ def main():
         epoch = 0
         for i, items in enumerate(train_loader):
         
-            if i%total == 0:
+            if i % total == 0:
                 epoch += 1
                 print('Epoch', epoch)
                 progbar = Progbar(total, width=20, stateful_metrics=['iter'])
                 
             images = items['image'].to(device)
             masks = items['mask'].to(device)
+            constant_mask = items['constant_mask'].to(device)
             
             # Forward pass
-            outputs, residuals, loss, logs = inpainting_model.process(images, masks)
+            outputs, residuals, loss, logs = inpainting_model.process(images, masks, constant_mask)
             step = inpainting_model._iteration
 
             # Backward pass
@@ -102,7 +102,7 @@ def main():
             for log in logs:
                 logger.add_scalar(log[0], log[1], global_step=step)
 
-            if i % 100 == 0:
+            if i % config['training']['tf_summary_iters'] == 0:
                 grid = torchvision.utils.make_grid(outputs, nrow=4)
                 logger.add_image('outputs', grid, step)
 
