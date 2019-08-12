@@ -24,8 +24,10 @@ def compare_psnr(y, x):
         return math.inf
     return 20 * math.log10(255.0 / math.sqrt(mse))
 
+ 
 def compare_l1_loss(y, x):
    return np.sum(np.abs(x / 256. - y / 256.)) / 3.
+
 
 if __name__ == '__main__':
     args = parse_args()

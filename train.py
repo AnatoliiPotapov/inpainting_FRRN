@@ -44,7 +44,6 @@ def main():
         device = torch.device("cpu")
 
     # initialize random seed
-    
     torch.manual_seed(config["seed"])
     torch.cuda.manual_seed_all(config["seed"])
     if not training:
