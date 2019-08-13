@@ -8,6 +8,7 @@ import torchvision
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 
+from utils.general import get_config
 from utils.masks import get_constant_mask
 from model.net import InpaintingModel
 from data.dataset import Dataset
@@ -18,15 +19,13 @@ from utils.progbar import Progbar
 os.system("clear")
 def main():
     # ARGS 
-    config_path = 'experiments/config.yml'
+    config_path = './experiments/local/config.yml'
     masks_path = None
     training = True
 
     # load config
     code_path = './'
-    with open(os.path.join(code_path, config_path), 'r') as f:
-        pretty_config = f.read()
-        config = yaml.load(pretty_config, yaml.Loader)
+    config, pretty_config = get_config(os.path.join(code_path, config_path))
 
     print('\nModel configurations:'\
           '\n---------------------------------\n'\
@@ -65,12 +64,13 @@ def main():
     # generator training
     if training:
         print('\nStart training...\n')
-        inpainting_model.train()
         batch_size = config['training']['batch_size']
 
         # create dataset
-        dataset = Dataset(config, config['path']['train'], masks_path, training)
+        dataset = Dataset(config, training=True)
         train_loader = dataset.create_iterator(batch_size)
+
+        test_dataset = Dataset(config, training=False)
 
         # Train the generator
         total = len(dataset)
@@ -80,7 +80,8 @@ def main():
         # Training loop
         epoch = 0
         for i, items in enumerate(train_loader):
-        
+            inpainting_model.train()
+
             if i % total == 0:
                 epoch += 1
                 print('Epoch', epoch)
@@ -108,12 +109,21 @@ def main():
                 grid = torchvision.utils.make_grid(images, nrow=4)
                 logger.add_image('gt', grid, step)
             
-                #grid = torchvision.utils.make_grid((residuals.detach()*(1-masks.detach())), nrow=4)
-                #logger.add_image('residuals', grid, step)
-
             if step % config['training']['save_iters'] == 0:
                 # TODO Eval metrics 
-                inpainting_model.save()
+                #inpainting_model.save()
+                inpainting_model.generator.eval()
+
+                print('Predicting...')
+                test_loader = test_dataset.create_iterator(batch_size)
+                del images, masks, constant_mask
+                
+                for i, items in enumerate(test_loader):
+                    images = items['image'].to(device)
+                    masks = items['mask'].to(device)
+                    constant_mask = items['constant_mask'].to(device)
+                    result, _, _ = inpainting_model.forward(images, masks, constant_mask)
+                    print(result.shape)
 
             if step >= config['training']['max_iteration']:
                 break

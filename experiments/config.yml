@@ -1,11 +1,9 @@
 path:
   train: '/mnt/data1/home/a.s.potapov/data/inpainting/Places365/data_large/'
+  test: '/mnt/data1/'
   experiment: './experiments/dummy/'
 
 dataset:
-  centered: False
-  mask_height: 50
-  mask_width: 50
   image_height: 600
   image_width: 500
   max_masks_count: 5
@@ -20,7 +18,7 @@ training:
   learning_rate: 0.0001   # set learning rate for training generator and discriminator as 10:1
   beta1: 0                # 0
   beta2: 0.9              # 0.9
-  mse_loss_weight: 1      # 0
+  mse_loss_weight: 0.0      # 0
   style_loss_weight: 100  # 100
   rec_loss_weight: 20     # 20
   step_loss_weight: 2     # 2

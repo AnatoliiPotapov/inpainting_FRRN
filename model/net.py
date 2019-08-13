@@ -32,7 +32,7 @@ class BaseModel(nn.Module):
             else:
                 data = torch.load(checkpoint, map_location=lambda storage, loc: storage)
             
-            self.generator.load_state_dict(data['generator'])
+            self.generator.load_state_dict(data['generator'], strict=False)
             self._iteration = data['iteration']
         else:
             print('Checkpoint', self.checkpoint + self.name + '.ckpt-{iter}', 'not found!')

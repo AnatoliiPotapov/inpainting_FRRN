@@ -77,7 +77,6 @@ class StyleLoss(nn.Module):
         return style_loss
 
 
-
 class PerceptualLoss(nn.Module):
     r"""
     Perceptual loss, VGG-based
@@ -104,7 +103,6 @@ class PerceptualLoss(nn.Module):
 
 
         return content_loss
-
 
 
 class VGG19(torch.nn.Module):
