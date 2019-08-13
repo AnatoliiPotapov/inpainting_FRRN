@@ -1,7 +1,15 @@
 path:
-  train: '/mnt/data1/home/a.s.potapov/data/inpainting/Places365/data_large/'
-  test: '/mnt/data1/'
-  experiment: './experiments/dummy/'
+  # Train
+  train:
+    images: '/mnt/data1/home/a.s.potapov/data/inpainting/Places365/data_large/'
+
+  # Test
+  test: 
+    images: '/mnt/data1/home/a.s.potapov/data/inpainting/DATASET_INPAINTING/test/'
+    labels: '/mnt/data1/home/a.s.potapov/data/inpainting/DATASET_INPAINTING/test_gt/'
+    
+  # Experiment path
+  experiment: './experiments/new_dummy/'
 
 dataset:
   image_height: 600
@@ -14,20 +22,25 @@ architecture:
   num_blocks: 8
 
 training:
-  batch_size: 1           # 8 
+  batch_size: 2           # 8 
+
+  # Optimizer
   learning_rate: 0.0001   # set learning rate for training generator and discriminator as 10:1
   beta1: 0                # 0
   beta2: 0.9              # 0.9
-  mse_loss_weight: 0.0      # 0
+
+  # Loss
+  mse_loss_weight: 0.0    # 0
   style_loss_weight: 100  # 100
   rec_loss_weight: 20     # 20
   step_loss_weight: 2     # 2
-  # not implemented
-  adv_loss_weight: 0.1    # 0.1
-  
-  save_iters: 500
-  max_iteration: 1000000
-  tf_summary_iters: 200
+  adv_loss_weight: 0.1    # TODO not implemented # 0.1 
 
-gpu: '1' #[0,1,2,3]
+  # Checkpointing
+  save_iters: 500
+  max_iteration: 1000000000
+  tf_summary_iters: 100
+
+# Hardware setup
+gpu: '1,3' #[0,1,2,3]
 seed: 1337

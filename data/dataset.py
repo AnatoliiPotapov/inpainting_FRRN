@@ -48,7 +48,7 @@ class Dataset(torch.utils.data.Dataset):
         return item
         
     def _load_item(self, index):
-        image = io.imread(self.images[index])
+        image = io.imread(os.path.join(self.dataset_path, self.images[index]))
         image = self._to_tensor(image)
         
         assert image.size()[0] == 3
@@ -74,12 +74,13 @@ class Dataset(torch.utils.data.Dataset):
             'image': image,
             'mask': mask,
             'constant_mask': constant_mask,
+            'filename': self.images[index],
         }
 
     def _read_data_from_file(self):
         files = None
         with open(os.path.join(self.dataset_path,'files.txt'), 'r') as f:
-            files = [os.path.join(self.dataset_path, f) for f in f.read().split('\n')[:-1]]
+            files = f.read().split('\n')[:-1]
         return files
 
     def _to_tensor(self, image):

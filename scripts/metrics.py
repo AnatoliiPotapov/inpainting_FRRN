@@ -1,4 +1,5 @@
 import math
+import os
 
 import numpy as np
 import argparse
@@ -27,6 +28,42 @@ def compare_psnr(y, x):
  
 def compare_l1_loss(y, x):
    return np.sum(np.abs(x / 256. - y / 256.)) / 3.
+
+
+def get_list_of_files(folder):
+    return glob(os.path.join(folder,'*.png')) + glob(os.path.join(folder,'*.jpg'))
+
+
+def compute_metrics(predictions_dir, gt_dir):
+    metrics = []
+    
+    filenames = [f.split('/')[-1] for f in get_list_of_files(predictions_dir)]
+    filenames_gt = [f.split('/')[-1] for f in get_list_of_files(gt_dir)]
+
+    filenames = sorted(filenames)
+    filenames_gt = sorted(filenames_gt)
+
+    assert set(filenames) == set(filenames_gt)
+    
+    for i, filename in enumerate(filenames):
+        prediction_image = imread(os.path.join(predictions_dir, filename))
+        gt_image = imread(os.path.join(gt_dir, filename))
+
+        metrics.append({
+            'filename': filename,
+            'psnr': compare_psnr(prediction_image, gt_image),
+            'l1': compare_l1_loss(prediction_image, gt_image)
+        })
+    
+    mean_psnr = round(np.mean([f['psnr'] for f in metrics]), 4)
+    mean_l1 = round(np.mean([f['l1'] for f in metrics]), 4)
+    
+    print(
+        "PSNR: %.4f" % mean_psnr,
+        "L1: %.4f" % mean_l1,
+    )
+
+    return mean_psnr, mean_l1, metrics
 
 
 if __name__ == '__main__':

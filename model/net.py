@@ -55,7 +55,6 @@ class InpaintingModel(BaseModel):
             gpus = [int(i) for i in config["gpu"].split(",")]
     
             if len(gpus) > 1:
-                # TODO different gpus ids
                 gpus = list(range(len(gpus)))
                 generator = nn.DataParallel(generator, gpus)
         self.add_module('generator', generator)
