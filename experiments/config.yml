@@ -16,13 +16,18 @@ dataset:
   image_width: 500
   max_masks_count: 5
   num_workers: 0
-  factor: 8
+  factor: 16
 
 architecture:
   num_blocks: 8
 
 training:
-  batch_size: 2           # 8 
+  batch_size: 8           # 8 
+  random_crop: True
+  strip_size: 112         # Should be factor of 16
+  alpha: 1.0              # Teacher forcing, starting value
+  alpha_decay: 0.005
+  alpha_decay_start_iter: 5       
 
   # Optimizer
   learning_rate: 0.0001   # set learning rate for training generator and discriminator as 10:1
@@ -41,6 +46,7 @@ training:
   max_iteration: 1000000000
   tf_summary_iters: 100
 
+
 # Hardware setup
-gpu: '1,3' #[0,1,2,3]
+gpu: '0,3' #[0,1,2,3]
 seed: 1337
