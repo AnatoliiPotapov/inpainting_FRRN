@@ -78,6 +78,10 @@ class InpaintingModel(BaseModel):
         self.optimizer = torch.optim.Adam(generator.parameters(), 
                                      lr=learning_rate, betas=betas)
 
+        self.alpha = config['training']['alpha']
+        self.alpha_decay = config['training']['alpha_decay']
+        self.alpha_decay_start_iter = config['training']['alpha_decay_start_iter']
+
     def process(self, images, masks, constant_mask):
         self._iteration += 1
         images_gt = images.clone().detach().requires_grad_(False)
@@ -87,6 +91,12 @@ class InpaintingModel(BaseModel):
 
         # process outputs
         outputs, residuals, res_masks = self(images, masks, constant_mask)
+
+        # alpha
+        if self.alpha_decay_start_iter > 0:
+            self.alpha_decay_start_iter -= 1
+        elif self.alpha > 0:
+            self.alpha -= self.alpha_decay
 
         # losses 
         mse_loss = self.mse_loss(outputs, images_gt)
@@ -110,12 +120,13 @@ class InpaintingModel(BaseModel):
             ("style", style_loss.item()),
             ("rec", rec_loss.item()),
             ("step", step_loss.item()),
+            ("alpha", self.alpha),
         ]
         
         return outputs, residuals, loss, logs
 
     def forward(self, images, masks, constant_mask):
-        return self.generator(images, masks, constant_mask)
+        return self.generator(images, masks, constant_mask, self.alpha)
 
     def backward(self, loss):
         loss.backward()

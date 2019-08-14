@@ -60,9 +60,9 @@ class FRRB(nn.Module):
     def __init__(self):
         super().__init__()
         self.conf = {
-            'left': [(2,3,64,'r','relu'), (2,3,96,'r','relu'), (2,3,128,'r','relu'),
-                     (1,3,96,'u','leaky'), (1,3,64,'u','leaky'), (1,3,3,'u','none')],
-            'right': [(1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,3,'r','none')]
+            'left': [(2,3,32,'r','relu'), (2,3,64,'r','relu'), (2,3,96,'r','relu'), (2,3,128,'r','relu'),
+                     (1,3,96,'u','leaky'), (1,3,64,'u','leaky'), (1,3,32,'u','leaky'), (1,3,3,'u','none')],
+            'right': [(1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,3,'r','none')]
         }
         self.left = self.get_pipeline_from_config(self.conf['left'])
         self.right = self.get_pipeline_from_config(self.conf['right'])
@@ -104,13 +104,16 @@ class InpaintingGenerator(nn.Module):
         ])
 
     @profile
-    def forward(self, image, mask, constant_mask):
+    def forward(self, image, mask, constant_mask, alpha):
         initial_mask = mask.clone().detach()
+        result_gt = image.clone()
         result = image.clone() * mask
 
         residuals = []
         res_masks = []
         for f_1, f_2 in zip(self.frrb_1, self.frrb_2):
+            result = alpha*result_gt + (1-alpha)*result
+
             residual_1, _ = f_1(result, mask, constant_mask)
             result_1 = result + residual_1 * (1 - initial_mask)
             residual_2, mask = f_2(result_1, mask, constant_mask)
@@ -119,5 +122,5 @@ class InpaintingGenerator(nn.Module):
 
             res_masks.append(mask - initial_mask)
             residuals.append(result)
-            
+
         return result, residuals, res_masks

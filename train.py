@@ -10,6 +10,7 @@ from utils.progbar import Progbar
 from model.net import InpaintingModel
 from data.dataset import Dataset
 from scripts.metrics import compute_metrics
+from utils.model import random_crop
 
 
 os.system("clear")
@@ -92,15 +93,20 @@ def main():
                 epoch += 1
                 print('Epoch', epoch)
                 progbar = Progbar(total, width=20, stateful_metrics=['iter'])
-                
-            images = items['image'].to(device)
-            masks = items['mask'].to(device)
-            constant_mask = items['constant_mask'].to(device)
             
+            images, masks, constant_mask = items['image'], items['mask'], items['constant_mask']
+
+            del items
+            if config['training']['random_crop']:
+                images, masks, constant_mask = random_crop(images, masks, constant_mask, 
+                                                           config['training']['strip_size'])
+            images, masks, constant_mask = images.to(device), masks.to(device), constant_mask.to(device)
+
             # Forward pass
             outputs, residuals, loss, logs = inpainting_model.process(images, masks, constant_mask)
             step = inpainting_model._iteration
-
+            del masks, constant_mask, residuals
+            
             # Backward pass
             inpainting_model.backward(loss)
 
@@ -115,18 +121,19 @@ def main():
                 grid = torchvision.utils.make_grid(images, nrow=4)
                 logger.add_image('gt', grid, step)
             
+            del outputs
             if step % config['training']['save_iters'] == 0:
                 inpainting_model.save()
                 inpainting_model.generator.eval()
 
                 print('Predicting...')
-                test_loader = test_dataset.create_iterator(batch_size)
-                del images, masks, constant_mask, outputs, residuals 
+                test_loader = test_dataset.create_iterator(batch_size)    
                 
                 eval_directory = os.path.join(checkpoint, f'predictions/pred_{step}') 
                 if not os.path.exists(eval_directory):
                     os.makedirs(eval_directory)
                 
+                # TODO batch size
                 for items in test_loader:
                     images = items['image'].to(device)
                     masks = items['mask'].to(device)
@@ -149,6 +156,8 @@ def main():
 
             progbar.add(len(images), values=[('iter', step), 
                                              ('loss', loss.cpu().detach().numpy())] + logs)
+            del images
+
     # generator test
     else:
         print('\nStart testing...\n')
