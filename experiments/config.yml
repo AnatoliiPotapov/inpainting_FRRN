@@ -28,7 +28,8 @@ training:
   strip_size: 112         # Should be factor of 16
   alpha: 0.03              # Teacher forcing, starting value
   alpha_decay: 0.0
-  alpha_decay_start_iter: 5       
+  alpha_decay_start_iter: 5  
+  beta: 0.7     
 
   # Optimizer
   learning_rate: 0.00005   # set learning rate for training generator and discriminator as 10:1

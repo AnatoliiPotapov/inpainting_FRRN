@@ -5,6 +5,7 @@ from torch import nn
 
 from model.layers import InpaintingGenerator
 from model.loss import AdversarialLoss, StyleLoss
+from utils.model import random_alpha
 
 
 class BaseModel(nn.Module):
@@ -78,6 +79,8 @@ class InpaintingModel(BaseModel):
         self.optimizer = torch.optim.Adam(generator.parameters(), 
                                      lr=learning_rate, betas=betas)
 
+        self.beta = config['training']['beta']
+
         self.alpha = config['training']['alpha']
         self.alpha_decay = config['training']['alpha_decay']
         self.alpha_decay_start_iter = config['training']['alpha_decay_start_iter']
@@ -127,7 +130,13 @@ class InpaintingModel(BaseModel):
         return outputs, residuals, loss, logs
 
     def forward(self, images, masks, constant_mask):
-        return self.generator(images, masks, constant_mask, self.alpha)
+        if self.alpha > 0:
+            alpha = random_alpha(self.alpha, self.beta)
+            assert alpha <= self.alpha
+        else:
+            alpha = 0
+
+        return self.generator(images, masks, constant_mask, alpha)
 
     def backward(self, loss):
         loss.backward()
