@@ -19,7 +19,7 @@ def pad_image(image, mask, width, height, factor=8):
     pad_zero = torch.nn.ConstantPad2d((0, pad_x, 0, pad_y), 0)
     pad_ones = torch.nn.ConstantPad2d((0, pad_x, 0, pad_y), 1)
 
-    return pad_zero(image), pad_ones(mask), pad_zero(pad_mask)
+    return pad_zero(image), pad_zero(mask), pad_zero(pad_mask)
 
 
 def random_crop(images, masks, constant_mask, strip_size):

@@ -127,7 +127,7 @@ def main():
                 inpainting_model.generator.eval()
 
                 print('Predicting...')
-                test_loader = test_dataset.create_iterator(batch_size)    
+                test_loader = test_dataset.create_iterator(batch_size=1)    
                 
                 eval_directory = os.path.join(checkpoint, f'predictions/pred_{step}') 
                 if not os.path.exists(eval_directory):
@@ -150,6 +150,7 @@ def main():
                 mean_psnr, mean_l1, metrics = compute_metrics(eval_directory, config['path']['test']['labels'])
                 logger.add_scalar('PSNR', mean_psnr, global_step=step)
                 logger.add_scalar('L1', mean_l1, global_step=step)
+                
                 
             if step >= config['training']['max_iteration']:
                 break

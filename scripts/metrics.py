@@ -43,7 +43,7 @@ def compute_metrics(predictions_dir, gt_dir):
     filenames = sorted(filenames)
     filenames_gt = sorted(filenames_gt)
 
-    assert set(filenames) == set(filenames_gt)
+    #assert set(filenames) == set(filenames_gt)
     
     for i, filename in enumerate(filenames):
         prediction_image = imread(os.path.join(predictions_dir, filename))

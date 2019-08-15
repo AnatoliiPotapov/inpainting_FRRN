@@ -97,6 +97,7 @@ class InpaintingModel(BaseModel):
             self.alpha_decay_start_iter -= 1
         elif self.alpha > 0:
             self.alpha -= self.alpha_decay
+            self.alpha = min(self.alpha, 0.0)
 
         # losses 
         mse_loss = self.mse_loss(outputs, images_gt)
