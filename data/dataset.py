@@ -59,11 +59,11 @@ class Dataset(torch.utils.data.Dataset):
         # crop image
         image = image[:, :self.image_height, :self.image_width]
         
-        if not self.training:
-            mask = get_mask(image.numpy())
-        elif self.masks:
+        if self.masks:
             mask = io.imread(os.path.join(self.masks_path, self.masks[index]))
             mask = 1 - mask
+        elif not self.training:
+            mask = get_mask(image.numpy())
         else:
             mask = create_mask(width=image.size()[2], height=image.size()[1], 
                                max_masks_count=self.max_masks_count)
