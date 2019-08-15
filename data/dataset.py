@@ -27,13 +27,16 @@ class Dataset(torch.utils.data.Dataset):
         # loading dataset
         if training:
             self.dataset_path = config['path']['train']['images']
+            self.masks = None
         else:
             self.dataset_path = config['path']['test']['images']
+            self.masks_path = config['path']['test']['masks']
+            print('Loading file list masks... ', self.dataset_path)
+            self.masks = self._read_data_from_file(self.masks_path)
 
         print('Loading file list... ', self.dataset_path)
-        self.images = self._read_data_from_file()
+        self.images = self._read_data_from_file(self.dataset_path)
         
-        self.masks = None
         self.training = training
         
     def __len__(self):
@@ -58,6 +61,9 @@ class Dataset(torch.utils.data.Dataset):
         
         if not self.training:
             mask = get_mask(image.numpy())
+        elif self.masks:
+            mask = io.imread(os.path.join(self.masks_path, self.masks[index]))
+            mask = 1 - mask
         else:
             mask = create_mask(width=image.size()[2], height=image.size()[1], 
                                max_masks_count=self.max_masks_count)
@@ -77,9 +83,9 @@ class Dataset(torch.utils.data.Dataset):
             'filename': self.images[index],
         }
 
-    def _read_data_from_file(self):
+    def _read_data_from_file(self, path):
         files = None
-        with open(os.path.join(self.dataset_path,'files.txt'), 'r') as f:
+        with open(os.path.join(path,'files.txt'), 'r') as f:
             files = f.read().split('\n')[:-1]
         return files
 

@@ -7,6 +7,7 @@ path:
   test: 
     images: '../../data/inpainting/DATASET_INPAINTING/test/'
     labels: '../../data/inpainting/DATASET_INPAINTING/test_gt/'
+    masks: '../../data/inpainting/DATASET_INPAINTING/test_masks/'
     
   # Experiment path
   experiment: './experiments/v100_2/'
