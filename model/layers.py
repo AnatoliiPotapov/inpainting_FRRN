@@ -60,9 +60,12 @@ class FRRB(nn.Module):
     def __init__(self):
         super().__init__()
         self.conf = {
-            'left': [(2,3,32,'r','relu'), (2,3,64,'r','relu'), (2,3,96,'r','relu'), (2,3,128,'r','relu'),
-                     (1,3,96,'u','leaky'), (1,3,64,'u','leaky'), (1,3,32,'u','leaky'), (1,3,3,'u','none')],
-            'right': [(1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,3,'r','none')]
+            'left': [(2,7,32,'r','relu'), (2,5,32,'r','relu'), (2,5,32,'r','relu'), (2,3,32,'r','relu'),
+                     (2,3,32,'r','relu'), (2,3,64,'r','relu'), (2,3,96,'r','relu'), (2,3,128,'r','relu'),
+                     (1,3,96,'u','leaky'), (1,3,64,'u','leaky'), (1,3,32,'u','leaky'), (1,3,32,'u','leaky'),
+                     (1,3,32,'u','leaky'), (1,3,32,'u','leaky'), (1,3,32,'u','leaky'), (1,3,3,'u','none')],                     ],
+            'right': [(1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'),
+                      (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,3,'r','none')]
         }
         self.left = self.get_pipeline_from_config(self.conf['left'])
         self.right = self.get_pipeline_from_config(self.conf['right'])
