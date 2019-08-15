@@ -61,7 +61,6 @@ class Dataset(torch.utils.data.Dataset):
         
         if self.masks:
             mask = io.imread(os.path.join(self.masks_path, self.masks[index]))
-            mask = 1 - mask
         elif not self.training:
             mask = get_mask(image.numpy())
         else:
@@ -69,7 +68,9 @@ class Dataset(torch.utils.data.Dataset):
                                max_masks_count=self.max_masks_count)
         
         mask = self._to_tensor(mask)
-        
+        if self.masks:
+            mask = 1 - mask
+            
         # padding image
         if self.factor:
             image, mask, constant_mask = pad_image(image, mask, factor=self.factor,
