@@ -48,9 +48,10 @@ def random_crop(images, masks, constant_mask, strip_size):
     return images, masks, constant_mask
 
 
-def random_beta(alpha, beta):
+def random_alpha(alpha, beta):
     step = np.random.rand()
     def f(x):
         return ((x-beta)/(1-beta)) * alpha
     if step > beta:
         return f(step)
+    return 0.0

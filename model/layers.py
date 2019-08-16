@@ -64,19 +64,22 @@ class FRRB(nn.Module):
                      (2,3,32,'r','relu'), (2,3,64,'r','relu'), (2,3,96,'r','relu'), (2,3,128,'r','relu'),
                      (1,3,96,'u','leaky'), (1,3,64,'u','leaky'), (1,3,32,'u','leaky'), (1,3,32,'u','leaky'),
                      (1,3,32,'u','leaky'), (1,3,32,'u','leaky'), (1,3,32,'u','leaky'), (1,3,3,'u','none')],
-            'right': [(1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'),
-                      (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,3,'r','none')]
+            'right': [(1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'), 
+                      (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'),(1,5,3,'r','none')]
         }
         self.left = self.get_pipeline_from_config(self.conf['left'])
         self.right = self.get_pipeline_from_config(self.conf['right'])
 
     def forward(self, x, mask, constant_mask):
+        
         left_r, left_mask = self.left(x, mask)
         right_r, right_mask = self.right(x, mask)
+    
         mask = left_mask * right_mask 
         if constant_mask is not None:
             mask *= constant_mask
         r = 0.5 * ((left_r + right_r) * mask).float()
+        
         return r, mask   
 
     def get_pipeline_from_config(self, conf):

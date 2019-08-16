@@ -17,7 +17,7 @@ dataset:
   image_width: 500
   max_masks_count: 5
   num_workers: 32
-  factor: 16
+  factor: 128
 
 architecture:
   num_blocks: 12
