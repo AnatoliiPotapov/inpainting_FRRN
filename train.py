@@ -1,6 +1,7 @@
 import os 
 import yaml 
 import random
+import argparse
 
 import numpy as np
 
@@ -14,15 +15,15 @@ from utils.model import random_crop
 
 
 os.system("clear")
-def main():
+def main(config_path, experiment_path):
     # ARGS 
-    config_path = './experiments/config.yml'
     masks_path = None
     training = True
 
     # load config
     code_path = './'
     config, pretty_config = get_config(os.path.join(code_path, config_path))
+    config['experiment'] = os.path.join(experiment_path, config['experiment'])
 
     print('\nModel configurations:'\
           '\n---------------------------------\n'\
@@ -124,6 +125,10 @@ def main():
             del outputs
             if step % config['training']['save_iters'] == 0:
                 inpainting_model.save()
+                
+                alpha = inpainting_model.alpha
+                inpainting_model.alpha = 0.0
+                
                 inpainting_model.generator.eval()
 
                 print('Predicting...')
@@ -151,6 +156,7 @@ def main():
                 logger.add_scalar('PSNR', mean_psnr, global_step=step)
                 logger.add_scalar('L1', mean_l1, global_step=step)
                 
+                inpainting_model.alpha = alpha
                 
             if step >= config['training']['max_iteration']:
                 break
@@ -170,4 +176,8 @@ def main():
 
 # ARGS
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config_path')
+    parser.add_argument('--experiment_path', default='../experiments')
+    args = parser.parse_args()
+    main(args.config_path, args.experiment_path)

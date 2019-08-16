@@ -7,6 +7,7 @@ from torch import nn
 import torch.nn.functional as F
 
 from .pconv import PartialConv2d
+from .config import get_model
 
 
 class PConvBlock(nn.Module):
@@ -57,16 +58,9 @@ class Stack(nn.Module):
 
 
 class FRRB(nn.Module):
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
-        self.conf = {
-            'left': [(2,7,32,'r','relu'), (2,5,32,'r','relu'), (2,5,32,'r','relu'), (2,3,32,'r','relu'),
-                     (2,3,32,'r','relu'), (2,3,64,'r','relu'), (2,3,96,'r','relu'), (2,3,128,'r','relu'),
-                     (1,3,96,'u','leaky'), (1,3,64,'u','leaky'), (1,3,32,'u','leaky'), (1,3,32,'u','leaky'),
-                     (1,3,32,'u','leaky'), (1,3,32,'u','leaky'), (1,3,32,'u','leaky'), (1,3,3,'u','none')],
-            'right': [(1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'), 
-                      (1,5,32,'r','relu'), (1,5,32,'r','relu'), (1,5,32,'r','relu'),(1,5,3,'r','none')]
-        }
+        self.conf = get_model(config['architecture']['model'])
         self.left = self.get_pipeline_from_config(self.conf['left'])
         self.right = self.get_pipeline_from_config(self.conf['right'])
 
@@ -103,10 +97,10 @@ class InpaintingGenerator(nn.Module):
     def __init__(self, config):
         super(InpaintingGenerator, self).__init__()
         self.frrb_1 = nn.ModuleList([
-            FRRB() for i in range(config["architecture"]["num_blocks"])
+            FRRB(config) for i in range(config["architecture"]["num_blocks"])
         ])
         self.frrb_2 = nn.ModuleList([
-            FRRB() for i in range(config["architecture"]["num_blocks"])
+            FRRB(config) for i in range(config["architecture"]["num_blocks"])
         ])
 
     @profile

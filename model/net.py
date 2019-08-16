@@ -6,6 +6,7 @@ from torch import nn
 from model.layers import InpaintingGenerator
 from model.loss import AdversarialLoss, StyleLoss
 from utils.model import random_alpha
+from .optimizer import RAdam
 
 
 class BaseModel(nn.Module):
@@ -76,8 +77,13 @@ class InpaintingModel(BaseModel):
         
         learning_rate = config['training']["learning_rate"]
         betas = (config['training']["beta1"], config['training']["beta2"])
-        self.optimizer = torch.optim.Adam(generator.parameters(), 
-                                     lr=learning_rate, betas=betas)
+        
+        if config['training']['optimizer'] == 'adam':
+            self.optimizer = torch.optim.Adam(generator.parameters(), 
+                                        lr=learning_rate, betas=betas)
+        elif config['training']['optimizer'] == 'radam':
+            self.optimizer = RAdam(generator.parameters(), 
+                                    lr=learning_rate, betas=betas)
 
         self.beta = config['training']['beta']
 

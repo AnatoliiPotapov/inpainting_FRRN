@@ -10,38 +10,40 @@ path:
     masks: '../../data/inpainting/DATASET_INPAINTING/test_masks/'
     
   # Experiment path
-  experiment: './experiments/v100_2/'
+  experiment: './experiments/v100_3/'
 
 dataset:
   image_height: 600
   image_width: 500
   max_masks_count: 5
   num_workers: 32
-  factor: 128
+  factor: 256
 
 architecture:
-  num_blocks: 12
+  num_blocks: 7
+  model: 'v3'             # v2/v3
 
 training:
   batch_size: 8       
   random_crop: False
   strip_size: 112         # Should be factor of 16
-  alpha: 0.03              # Teacher forcing, starting value
+  alpha: 0.3              # Teacher forcing, starting value
   alpha_decay: 0.0
   alpha_decay_start_iter: 5  
-  beta: 0.7     
+  beta: 0.7
 
   # Optimizer
-  learning_rate: 0.00005   # set learning rate for training generator and discriminator as 10:1
+  optimizer: 'radam'      # radam/adam
+  learning_rate: 0.00005  # set learning rate for training generator and discriminator as 10:1
   beta1: 0                # 0
   beta2: 0.9              # 0.9
 
   # Loss
-  mse_loss_weight: 0.1    # 0
-  style_loss_weight: 100  # 100
+  mse_loss_weight: 10     # 0
+  style_loss_weight: 80   # 100
   rec_loss_weight: 20     # 20
   step_loss_weight: 2     # 2
-  adv_loss_weight: 0.1    # TODO not implemented # 0.1 
+  adv_loss_weight: 0.0    # TODO not implemented # 0.1 
 
   # Checkpointing
   save_iters: 500
@@ -50,4 +52,4 @@ training:
 
 # Hardware setup
 gpu: '0,1,2,3,4,5,6,7' #[0,1,2,3]
-seed: 1338
+seed: 34567
