@@ -43,15 +43,18 @@ class BaseModel(nn.Module):
                     if '.ckpt' in f and '_dis' in f:
                         iterations.append(int(f.split('-')[-1]))
                 
-                checkpoint = self.checkpoint + self.name + '_dis' + '.ckpt-' + str(max(iterations))
-                print('Loading discriminator %s...' % checkpoint)
-                
-                if torch.cuda.is_available():
-                    data = torch.load(checkpoint)
+                if len(iterations)>0:
+                    checkpoint = self.checkpoint + self.name + '_dis' + '.ckpt-' + str(max(iterations))
+                    print('Loading discriminator %s...' % checkpoint)
+                    
+                    if torch.cuda.is_available():
+                        data = torch.load(checkpoint)
+                    else:
+                        data = torch.load(checkpoint, map_location=lambda storage, loc: storage)
+                    
+                    self.discriminator.load_state_dict(data['discriminator'], strict=False)
                 else:
-                    data = torch.load(checkpoint, map_location=lambda storage, loc: storage)
-                
-                self.discriminator.load_state_dict(data['discriminator'], strict=False)
+                    print('No checkpoints for discriminator...')
         else:
             print('Checkpoint', self.checkpoint + self.name + '.ckpt-{iter}', 'not found!')
 

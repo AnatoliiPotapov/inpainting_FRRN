@@ -10,7 +10,7 @@ path:
     masks: '../../data/inpainting/DATASET_INPAINTING/test_masks/'
     
   # Experiment path
-  experiment: './v100_2/'
+  experiment: './v100_2_discriminator/'
 
 dataset:
   image_height: 600
@@ -57,4 +57,4 @@ training:
 
 # Hardware setup
 gpu: '0,1,2,3,4,5,6,7'
-seed: 1338
+seed: 133338
