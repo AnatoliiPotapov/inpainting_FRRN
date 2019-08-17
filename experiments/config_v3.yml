@@ -49,6 +49,7 @@ training:
   rec_loss_weight: 20     # 20
   step_loss_weight: 2     # 2
   adv_loss_weight: 0.0    # TODO not implemented # 0.1 
+  per_loss_weight: 0.1
 
   # Checkpointing
   save_iters: 500
