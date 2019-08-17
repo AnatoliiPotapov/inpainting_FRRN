@@ -124,3 +124,30 @@ class InpaintingGenerator(nn.Module):
             residuals.append(result)
 
         return result, residuals, res_masks
+
+
+class InpaintingDiscriminator(nn.Module):
+    def __init__(self, config):
+        super(InpaintingDiscriminator, self).__init__()
+
+        self.use_sigmoid = True
+
+        self.arch = nn.Sequential(
+            nn.Conv2d(in_channels=3, out_channels=64, kernel_size=4, stride=2, padding=1),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=4, stride=2, padding=1),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=4, stride=2, padding=1),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=4, stride=1, padding=1),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(in_channels=512, out_channels=1, kernel_size=4, stride=1, padding=1),
+        )
+
+    @profile
+    def forward(self, x):
+        outputs = self.arch(x)
+        if self.use_sigmoid:
+            outputs = torch.sigmoid(outputs)
+
+        return outputs

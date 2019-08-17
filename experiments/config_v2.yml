@@ -24,7 +24,7 @@ architecture:
   model: 'v2'              # v2/v3
 
 training:
-  batch_size: 8       
+  batch_size: 8      
   random_crop: False
   strip_size: 112          # Should be factor of 16
   alpha: 0.0               # Teacher forcing, starting value
@@ -32,18 +32,23 @@ training:
   alpha_decay_start_iter: 5  
   beta: 0.7     
 
+  # Discriminator
+  discriminator: True
+  gan_loss: nsgan         # nsgan | lsgan | hinge
+  d2g_lr: 0.1             # discriminator/generator learning rate ratio
+
   # Optimizer
-  optimizer: 'radam'      # radam/adam
+  optimizer: 'adam'       # radam/adam
   learning_rate: 0.00005  # set learning rate for training generator and discriminator as 10:1
   beta1: 0                # 0
   beta2: 0.9              # 0.9
 
   # Loss
   mse_loss_weight: 1.0    # 0
-  style_loss_weight: 0.0  # 100
-  rec_loss_weight: 0.0    # 20
-  step_loss_weight: 0.0   # 2
-  adv_loss_weight: 0.0    # TODO not implemented # 0.1 
+  style_loss_weight: 100.0 # 100
+  rec_loss_weight: 20.0    # 20
+  step_loss_weight: 2.0   # 2
+  adv_loss_weight: 0.1    # 0.1
 
   # Checkpointing
   save_iters: 500
@@ -51,5 +56,5 @@ training:
   tf_summary_iters: 100
 
 # Hardware setup
-gpu: '0,1,2,3,4,5,6,7' #[0,1,2,3]
+gpu: '0,1,2,3,4,5,6,7'
 seed: 1338

@@ -10,7 +10,7 @@ path:
     masks: '../../data/inpainting/DATASET_INPAINTING/test_masks/'
     
   # Experiment path
-  experiment: './experiments/v100_3/'
+  experiment: './v100_3/'
 
 dataset:
   image_height: 600
@@ -31,6 +31,11 @@ training:
   alpha_decay: 0.0
   alpha_decay_start_iter: 5  
   beta: 0.7
+
+  # Discriminator
+  discriminator: False
+  gan_loss: nsgan         # nsgan | lsgan | hinge
+  d2g_lr: 0.1             # discriminator/generator learning rate ratio
 
   # Optimizer
   optimizer: 'radam'      # radam/adam

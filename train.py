@@ -23,7 +23,7 @@ def main(config_path, experiment_path):
     # load config
     code_path = './'
     config, pretty_config = get_config(os.path.join(code_path, config_path))
-    config['experiment'] = os.path.join(experiment_path, config['experiment'])
+    config['path']['experiment'] = os.path.join(experiment_path, config['path']['experiment'])
 
     print('\nModel configurations:'\
           '\n---------------------------------\n'\
@@ -56,6 +56,7 @@ def main(config_path, experiment_path):
     # parse args
     images_path = config['path']['train']
     checkpoint = config['path']['experiment']
+    discriminator = config['training']['discriminator']
 
     # initialize log writer
     logger = SummaryWriter(log_dir=config['path']['experiment'])
@@ -103,14 +104,22 @@ def main(config_path, experiment_path):
                                                            config['training']['strip_size'])
             images, masks, constant_mask = images.to(device), masks.to(device), constant_mask.to(device)
 
-            # Forward pass
-            outputs, residuals, loss, logs = inpainting_model.process(images, masks, constant_mask)
-            step = inpainting_model._iteration
-            del masks, constant_mask, residuals
+            if discriminator:
+                # Forward pass
+                outputs, residuals, gen_loss, dis_adv_loss, logs = inpainting_model.process(images, masks, constant_mask)    
+                del masks, constant_mask, residuals
+                loss = gen_loss + dis_adv_loss
+                # Backward pass
+                inpainting_model.backward(gen_loss, dis_adv_loss)
+            else:
+                # Forward pass
+                outputs, residuals, loss, logs = inpainting_model.process(images, masks, constant_mask)    
+                del masks, constant_mask, residuals
+                # Backward pass
+                inpainting_model.backward(loss)
             
-            # Backward pass
-            inpainting_model.backward(loss)
-
+            step = inpainting_model._iteration
+            
             # Adding losses to Tensorboard
             for log in logs:
                 logger.add_scalar(log[0], log[1], global_step=step)
@@ -155,9 +164,9 @@ def main(config_path, experiment_path):
                 mean_psnr, mean_l1, metrics = compute_metrics(eval_directory, config['path']['test']['labels'])
                 logger.add_scalar('PSNR', mean_psnr, global_step=step)
                 logger.add_scalar('L1', mean_l1, global_step=step)
-                
+
                 inpainting_model.alpha = alpha
-                
+            
             if step >= config['training']['max_iteration']:
                 break
 
