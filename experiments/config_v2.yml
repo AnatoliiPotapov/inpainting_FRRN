@@ -49,6 +49,7 @@ training:
   rec_loss_weight: 20.0    # 20
   step_loss_weight: 2.0   # 2
   adv_loss_weight: 0.1    # 0.1
+  per_loss_weight: 0.1
 
   # Checkpointing
   save_iters: 500

@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from model.layers import InpaintingGenerator, InpaintingDiscriminator
-from model.loss import AdversarialLoss, StyleLoss
+from model.loss import AdversarialLoss, StyleLoss, PerceptualLoss
 from utils.model import random_alpha
 from .optimizer import RAdam
 
@@ -105,6 +105,10 @@ class InpaintingModel(BaseModel):
         self.add_module('style_loss', style_loss)
         self.style_loss_weight = config['training']["style_loss_weight"]
         
+        per_loss = PerceptualLoss()
+        self.add_module('per_loss', per_loss)
+        self.per_loss_weight = config['training']["per_loss_weight"]
+
         learning_rate = config['training']["learning_rate"]
         betas = (config['training']["beta1"], config['training']["beta2"])
         
@@ -176,6 +180,9 @@ class InpaintingModel(BaseModel):
         
         rec_loss = self.l1_loss(outputs * (1-masks), images_gt * (1-masks))
         rec_loss *= self.rec_loss_weight
+
+        per_loss = self.perceptual_loss(outputs, images_gt)
+        per_loss *= self.per_loss_weight
         
         step_loss = 0
         for r, m in zip(residuals, res_masks):
@@ -183,12 +190,13 @@ class InpaintingModel(BaseModel):
         step_loss /= len(residuals)
         step_loss *= self.step_loss_weight
 
-        loss = style_loss + mse_loss + rec_loss + step_loss
+        loss = style_loss + mse_loss + rec_loss + step_loss + per_loss
         logs = [
             ("mse", mse_loss.item()),
             ("style", style_loss.item()),
             ("rec", rec_loss.item()),
             ("step", step_loss.item()),
+            ("per", per_loss.item()),
             ("alpha", self.alpha),
         ]
 
