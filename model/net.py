@@ -18,6 +18,7 @@ class BaseModel(nn.Module):
         self._iteration = 0
 
         self.with_discriminator = config['training']['discriminator']
+        self.gpu = config['gpu']
     
     def load(self):
         iterations = []
@@ -29,11 +30,11 @@ class BaseModel(nn.Module):
             checkpoint = self.checkpoint + self.name + '.ckpt-' + str(max(iterations))
             print('Loading generator %s...' % checkpoint)
 
-            if torch.cuda.is_available():
+            if self.gpu and torch.cuda.is_available():
                 data = torch.load(checkpoint)
             else:
                 data = torch.load(checkpoint, map_location=lambda storage, loc: storage)
-            
+                
             self.generator.load_state_dict(data['generator'], strict=False)
             self._iteration = data['iteration']
 
@@ -43,11 +44,11 @@ class BaseModel(nn.Module):
                     if '.ckpt' in f and '_dis' in f:
                         iterations.append(int(f.split('-')[-1]))
                 
-                if len(iterations)>0:
+                if len(iterations):
                     checkpoint = self.checkpoint + self.name + '_dis' + '.ckpt-' + str(max(iterations))
                     print('Loading discriminator %s...' % checkpoint)
                     
-                    if torch.cuda.is_available():
+                    if self.gpu and torch.cuda.is_available():
                         data = torch.load(checkpoint)
                     else:
                         data = torch.load(checkpoint, map_location=lambda storage, loc: storage)
@@ -136,6 +137,8 @@ class InpaintingModel(BaseModel):
         self.alpha_decay = config['training']['alpha_decay']
         self.alpha_decay_start_iter = config['training']['alpha_decay_start_iter']
 
+        self.alpha = config['training']['alpha']
+
     def process(self, images, masks, constant_mask):
         self._iteration += 1
         images_gt = images.clone().detach().requires_grad_(False)
@@ -218,7 +221,7 @@ class InpaintingModel(BaseModel):
             alpha = 0
 
         return self.generator(images, masks, constant_mask, alpha)
-
+        
     def backward(self, gen_loss, dis_loss=None):
         gen_loss.backward()
         self.gen_optimizer.step()

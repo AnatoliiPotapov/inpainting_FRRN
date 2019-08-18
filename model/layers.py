@@ -103,7 +103,6 @@ class InpaintingGenerator(nn.Module):
             FRRB(config) for i in range(config["architecture"]["num_blocks"])
         ])
 
-    @profile
     def forward(self, image, mask, constant_mask, alpha):
         initial_mask = mask.clone().detach()
         result_gt = image.clone()
@@ -125,7 +124,22 @@ class InpaintingGenerator(nn.Module):
 
         return result, residuals, res_masks
 
+    def predict(self, image, mask, constant_mask):
+        initial_mask = mask.clone().detach()
+        result = image.clone() * mask
 
+        with torch.no_grad():
+            for f_1, f_2 in zip(self.frrb_1, self.frrb_2):
+                residual_1, _ = f_1(result, mask, constant_mask)
+                del _
+                result_1 = result + residual_1 * (1 - initial_mask)
+                residual_2, mask = f_2(result_1, mask, constant_mask)
+                del f_1, f_2
+                result = result_1 + residual_2 * (1 - initial_mask)
+                result = result.clamp(min=0.0, max=1.0)
+
+        return result
+    
 class InpaintingDiscriminator(nn.Module):
     def __init__(self, config):
         super(InpaintingDiscriminator, self).__init__()
@@ -144,7 +158,6 @@ class InpaintingDiscriminator(nn.Module):
             nn.Conv2d(in_channels=512, out_channels=1, kernel_size=4, stride=1, padding=1),
         )
 
-    @profile
     def forward(self, x):
         outputs = self.arch(x)
         if self.use_sigmoid:
