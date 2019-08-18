@@ -13,8 +13,8 @@ def create_mask(height=600, width=500, max_masks_count=5):
     mask = np.ones((height, width))
 
     for _ in range(np.random.randint(1, max_masks_count+1)):
-        mask_width = 50 + np.random.randint(0, 70)
-        mask_height = 50 + np.random.randint(0, 70)
+        mask_width = 80 + np.random.randint(0, 40)
+        mask_height = 80 + np.random.randint(0, 40)
         
         mask_x = np.random.randint(-20, width - mask_width + 20)
         mask_y = np.random.randint(-20, height - mask_height + 20)

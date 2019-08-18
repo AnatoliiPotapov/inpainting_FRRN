@@ -10,7 +10,7 @@ path:
     masks: '../../data/inpainting/DATASET_INPAINTING/test_masks/'
     
   # Experiment path
-  experiment: './v100_2/'
+  experiment: './v100_2_discriminator/'
 
 dataset:
   image_height: 600
@@ -33,7 +33,7 @@ training:
   beta: 0.7     
 
   # Discriminator
-  discriminator: False
+  discriminator: True
   gan_loss: nsgan         # nsgan | lsgan | hinge
   d2g_lr: 0.1             # discriminator/generator learning rate ratio
 
@@ -45,11 +45,11 @@ training:
 
   # Loss
   mse_loss_weight: 0.0    # 0
-  style_loss_weight: 0.0 # 100
+  style_loss_weight: 100.0 # 100
   rec_loss_weight: 20.0    # 20
   step_loss_weight: 2.0   # 2
-  adv_loss_weight: 0.0    # 0.1
-  per_loss_weight: 0.0
+  adv_loss_weight: 0.10    # 0.1
+  per_loss_weight: 0.10
 
   # Checkpointing
   save_iters: 500
@@ -58,4 +58,4 @@ training:
 
 # Hardware setup
 gpu: '0,1,2,3,4,5,6,7'
-seed: 13332
+seed: 13357
