@@ -2,6 +2,7 @@ path:
   # Train
   train:
     images: '../../data/inpainting/Places365/data_large/'
+    init_masks:  '../../data/inpainting/DATASET_INPAINTING/init_masks/'
 
   # Test
   test: 

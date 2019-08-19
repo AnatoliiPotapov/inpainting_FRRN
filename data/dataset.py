@@ -27,6 +27,9 @@ class Dataset(torch.utils.data.Dataset):
         # loading dataset
         if training:
             self.dataset_path = config['path']['train']['images']
+            self.init_masks_path = config['path']['train']['init_masks']
+            if self.init_masks_path:
+                self.init_masks = self._read_data_from_file(self.init_masks_path)
             self.masks = None
         else:
             self.dataset_path = config['path']['test']['images']
@@ -64,8 +67,13 @@ class Dataset(torch.utils.data.Dataset):
         elif not self.training:
             mask = get_mask(image.numpy())
         else:
-            mask = create_mask(width=image.size()[2], height=image.size()[1], 
-                               max_masks_count=self.max_masks_count)
+            if self.init_masks:
+                init_masks = io.imread(os.path.join(self.init_masks_path, self.init_masks[index]))
+                mask = create_mask(width=image.size()[2], height=image.size()[1], 
+                                max_masks_count=self.max_masks_count, init_mask=init_masks)
+            else:
+                mask = create_mask(width=image.size()[2], height=image.size()[1], 
+                                max_masks_count=self.max_masks_count)
         
         mask = self._to_tensor(mask)
         if self.masks:

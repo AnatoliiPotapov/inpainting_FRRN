@@ -2,6 +2,7 @@ path:
   # Train
   train:
     images: '../../data/inpainting/Places365/data_large/'
+    init_masks:  '../../data/inpainting/DATASET_INPAINTING/init_masks/'
 
   # Test
   test: 
@@ -24,7 +25,7 @@ architecture:
   model: 'v2'              # v2/v3
 
 training:
-  batch_size: 8      
+  batch_size: 8    
   random_crop: False
   strip_size: 112          # Should be factor of 16
   alpha: 0.0               # Teacher forcing, starting value

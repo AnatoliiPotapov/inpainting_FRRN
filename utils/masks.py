@@ -9,17 +9,33 @@ def get_mask(img):
     return (pixel_intensity < 3.0)*1.0
 
 # TODO migrate from np to torch
-def create_mask(height=600, width=500, max_masks_count=5):
-    mask = np.ones((height, width))
+def create_mask(height=600, width=500, max_masks_count=5, init_mask=None):
+    mask = np.zeros((height, width))
 
     for _ in range(np.random.randint(1, max_masks_count+1)):
-        mask_width = 80 + np.random.randint(0, 40)
-        mask_height = 80 + np.random.randint(0, 40)
         
-        mask_x = np.random.randint(-20, width - mask_width + 20)
-        mask_y = np.random.randint(-20, height - mask_height + 20)
-        
-        mask[mask_y:mask_y + mask_height, mask_x:mask_x + mask_width] = 0.0
+        if init_mask is not None:
+            old_mask = mask.copy()
+            for count in range(10):
+                mask_width = 80 + np.random.randint(0, 40)
+                mask_height = 80 + np.random.randint(0, 40)
+
+                mask_x = np.random.randint(-20, width - mask_width + 20)
+                mask_y = np.random.randint(-20, height - mask_height + 20)
+
+                mask[mask_y:mask_y + mask_height, mask_x:mask_x + mask_width] = 1.0
+                if (init_mask + mask).max() == 255:
+                    break
+                mask = old_mask.copy()
+    
+        else:
+            mask_width = 80 + np.random.randint(0, 40)
+            mask_height = 80 + np.random.randint(0, 40)
+
+            mask_x = np.random.randint(-20, width - mask_width + 20)
+            mask_y = np.random.randint(-20, height - mask_height + 20)
+
+            mask[mask_y:mask_y + mask_height, mask_x:mask_x + mask_width] = 1.0
     
     return mask
 
