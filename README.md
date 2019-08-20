@@ -26,6 +26,11 @@ python train.py
 python predict.py --pred_path ../Datasets/Huawei/DATASET_INPAINTING/new_result/ --config_path experiments/config_v2.yml --checkpoint experiments/checkpoints/ --masks_path experiments/masks/private/  --images_path ../Datasets/Huawei/DATASET_INPAINTING/test_final/ --cuda '1' --batch_size 10 --blured True
 ```
 
+To reproduce our solution, you need to download solution.zip from https://drive.google.com/file/d/1BLVtkeiB2EF7mE61vALKV9yP3ti-akT_/view?usp=sharing, then unzip it to experiments/
+
 PPS: for Dataset class to work each folder with pictures should contain files.txt with local filenames
 
-### Made by Tinkoff NLP team, trained on Tinkoff Kolmogorov compute cluster.
+### Made by Tinkoff NLP team.
+Anatoly Potapov (*) (research and coordination, choice of paper, implementation of FRRB)
+Vasily Karmazin (implemented most of the ideas, introduced bluring)
+Gleb Ishelev (helped a lot)
