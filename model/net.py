@@ -74,6 +74,7 @@ class BaseModel(nn.Module):
                 'discriminator': self.discriminator.state_dict()
             }, checkpoint)
 
+
 class InpaintingModel(BaseModel):
     def __init__(self, config):
         super(InpaintingModel, self).__init__('InpaintingModel', config)

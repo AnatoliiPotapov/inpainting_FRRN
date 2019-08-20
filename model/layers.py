@@ -47,6 +47,9 @@ class PConvBlock(nn.Module):
 
 
 class Stack(nn.Module):
+    """
+    Chainer for FRRB blocks
+    """
     def __init__(self, *modules):
         super().__init__()
         self.mod = nn.ModuleList(modules)
@@ -58,6 +61,9 @@ class Stack(nn.Module):
 
 
 class FRRB(nn.Module):
+    """
+    Full Resolution Residual Block
+    """
     def __init__(self, config):
         super().__init__()
         self.conf = get_model(config['architecture']['model'])
@@ -140,7 +146,11 @@ class InpaintingGenerator(nn.Module):
 
         return result
     
+
 class InpaintingDiscriminator(nn.Module):
+    """
+    InpaintingDiscriminator
+    """
     def __init__(self, config):
         super(InpaintingDiscriminator, self).__init__()
 

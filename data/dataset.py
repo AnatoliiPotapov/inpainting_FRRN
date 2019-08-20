@@ -13,7 +13,6 @@ from utils.masks import get_mask, create_mask
 
 
 class Dataset(torch.utils.data.Dataset):
-
     def __init__(self, config, training=True):
         super(Dataset, self).__init__()
         

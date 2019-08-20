@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 
 
-class PartialConv2d(nn.Conv2d):
+class PartialConv2d(nn.Conv2d): # From nvidia: https://github.com/NVIDIA/partialconv
     def __init__(self, *args, **kwargs):
 
         # whether the mask is multi-channel or not
