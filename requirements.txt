@@ -5,9 +5,9 @@ matplotlib
 tqdm
 pyyaml
 torch==1.1.0
-tensorflow==2.0.0-beta1
+tensorflow==1.4.0
 torchvision
 scikit-image
 pytorch-memlab
 pillow
-scipy==1.0.1
+scipy==1.1.0
