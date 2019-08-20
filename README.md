@@ -30,7 +30,10 @@ To reproduce our solution, you need to download solution.zip from https://drive.
 
 PPS: for Dataset class to work each folder with pictures should contain files.txt with local filenames
 
-### Made by Tinkoff NLP team.
+### Made by Tinkoff NLP team
+
 Anatoly Potapov (*) (research and coordination, choice of paper, implementation of FRRB)
+
 Vasily Karmazin (implemented most of the ideas, introduced bluring)
+
 Gleb Ishelev (helped a lot)
